@@ -1,0 +1,2145 @@
+[
+  {
+    "python": [
+      {
+        "id": "d1-py-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "OFF-BY-ONE",
+        "filename": "sum_inclusive.py",
+        "goal": "Return the sum of all integers from 1 up to and including n.",
+        "lines": [
+          "def sum_inclusive(n):",
+          "    total = 0",
+          "    for i in range(1, n):",
+          "        total += i",
+          "    return total",
+          "# sum_inclusive(5) returns 10 instead of 15!"
+        ],
+        "flawLine": 3,
+        "nudge": "Is the stop argument in Python's range(start, stop) inclusive or exclusive?",
+        "crowdTrapByLine": { "1": 4, "2": 6, "3": 72, "4": 13, "5": 5 },
+        "crowdTrapText": "13% of students tapped Line 4 first",
+        "patch": {
+          "tokens": ["range(1, ", "n + 1):", "for i in "],
+          "accept": [
+            "for i in range(1, n + 1):",
+            "for i in range(1, n+1):"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "range(1, n) excludes the upper bound n, stopping at n - 1; use range(1, n + 1).", "correct": true },
+          { "id": "b", "text": "range(1, n) starts at index 0 even when 1 is provided.", "correct": false },
+          { "id": "c", "text": "total += i does not update total on the final loop iteration.", "correct": false }
+        ],
+        "examRule": "Python's range(start, stop) is half-open [start, stop) — it always excludes stop. Use range(1, n + 1) for inclusive upper bounds."
+      },
+      {
+        "id": "d1-py-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "DP / MATRIX TRAP",
+        "filename": "init_grid.py",
+        "goal": "Initialize an independent rows x cols grid of zeros and set only the top-left cell to 1.",
+        "lines": [
+          "def make_grid(rows, cols):",
+          "    grid = [[0] * cols] * rows",
+          "    grid[0][0] = 1",
+          "    return grid",
+          "# Every row now starts with 1!"
+        ],
+        "flawLine": 2,
+        "nudge": "Does multiplying a list of lists by rows create independent copies or duplicate references to one inner list?",
+        "crowdTrapByLine": { "1": 3, "2": 45, "3": 39, "4": 8, "5": 5 },
+        "crowdTrapText": "39% of students tapped Line 3 first",
+        "patch": {
+          "tokens": ["[[0] * cols ", "for _ in range(rows)]", "for r in range(rows)]"],
+          "accept": [
+            "grid = [[0] * cols for _ in range(rows)]",
+            "grid = [[0] * cols for r in range(rows)]",
+            "grid = [[0] * cols for i in range(rows)]",
+            "grid = [[0 for _ in range(cols)] for _ in range(rows)]"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "[[0] * cols] * rows creates shallow references to the exact same inner list, so mutating row 0 mutates every row.", "correct": true },
+          { "id": "b", "text": "grid[0][0] = 1 broadcasts 1 across column 0 because Python lists behave like NumPy arrays.", "correct": false },
+          { "id": "c", "text": "[0] * cols is invalid syntax when cols is passed as a variable.", "correct": false }
+        ],
+        "examRule": "In 2D DP problems, never build a matrix with [[0] * cols] * rows. Use a list comprehension: [[0] * cols for _ in range(rows)] so every row is a distinct list."
+      },
+      {
+        "id": "d1-py-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "QUANT LOOK-AHEAD",
+        "filename": "backtest_signal.py",
+        "goal": "Simulate a causal day-by-day trading strategy that buys whenever the normalized price dips below 0.5.",
+        "lines": [
+          "def run_backtest(prices):",
+          "    signals = []",
+          "    max_val = max(prices)",
+          "    for day, price in enumerate(prices):",
+          "        norm_p = price / max_val",
+          "        action = \"BUY\" if norm_p < 0.5 else \"HOLD\"",
+          "        signals.append((day, action))",
+          "    return signals"
+        ],
+        "flawLine": 3,
+        "nudge": "On Day 0, does a real live trading algorithm already know the highest price of the entire year?",
+        "crowdTrapByLine": { "1": 2, "2": 5, "3": 39, "4": 9, "5": 31, "6": 10, "7": 4 },
+        "crowdTrapText": "31% of students tapped Line 5 first",
+        "choices": [
+          { "id": "a", "text": "Computing max(prices) across the entire array before looping leaks future price data into past trading decisions (look-ahead bias).", "correct": true },
+          { "id": "b", "text": "Dividing price by max_val performs integer floor division instead of floating-point division.", "correct": false },
+          { "id": "c", "text": "enumerate(prices) mutates the prices list in place during iteration.", "correct": false }
+        ],
+        "examRule": "In Quant backtests, any normalization or statistic computed over the full series leaks future information. Always track a running maximum up to the current day only."
+      }
+    ],
+    "cpp": [
+      {
+        "id": "d1-cpp-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "OA EDGE CASE",
+        "filename": "binary_search.cpp",
+        "goal": "Return the index of target in a huge sorted array, or -1 if not found.",
+        "lines": [
+          "int binary_search(const std::vector<int>& a, int target) {",
+          "    int low = 0, high = static_cast<int>(a.size()) - 1;",
+          "    while (low <= high) {",
+          "        int mid = (low + high) / 2;",
+          "        if (a[mid] == target) return mid;",
+          "        if (a[mid] < target) low = mid + 1;",
+          "        else high = mid - 1;",
+          "    }",
+          "    return -1;"
+        ],
+        "flawLine": 4,
+        "nudge": "What happens to low + high when both indices exceed one billion in a signed 32-bit int?",
+        "crowdTrapByLine": { "1": 4, "2": 24, "3": 33, "4": 29, "5": 3, "6": 4, "7": 3 },
+        "crowdTrapText": "33% of students tapped Line 3 first",
+        "patch": {
+          "tokens": ["low", "high", "mid", "+ (high - low) / 2", ">> 1"],
+          "accept": [
+            "int mid = low + (high - low) / 2;",
+            "int mid = low + ((high - low) / 2);",
+            "int mid = low + ((high - low) >> 1);"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "(low + high) can overflow a signed 32-bit int on large arrays; use low + (high - low) / 2 instead.", "correct": true },
+          { "id": "b", "text": "while (low <= high) causes an infinite loop when target is at index 0.", "correct": false },
+          { "id": "c", "text": "Dividing by 2 rounds up instead of truncating toward zero in C++.", "correct": false }
+        ],
+        "examRule": "Classic OA trap: adding two large signed integers can wrap negative and crash array indexing. Always compute binary search midpoints as low + (high - low) / 2."
+      },
+      {
+        "id": "d1-cpp-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "SILENT TLE TRAP",
+        "filename": "count_matches.cpp",
+        "goal": "Count how many times each query appears in a 200,000-element vector without timing out.",
+        "lines": [
+          "int count_matches(std::vector<int> data, int target) {",
+          "    int hits = 0;",
+          "    for (int val : data) {",
+          "        if (val == target) ++hits;",
+          "    }",
+          "    return hits;",
+          "}",
+          "// Called 50,000 times in a hot query loop!"
+        ],
+        "flawLine": 1,
+        "nudge": "Look closely at how std::vector<int> data is received by the function signature.",
+        "crowdTrapByLine": { "1": 41, "2": 4, "3": 38, "4": 11, "5": 2, "6": 4 },
+        "crowdTrapText": "38% of students tapped Line 3 first",
+        "patch": {
+          "tokens": ["const ", "std::vector<int>&", "data", "int target"],
+          "accept": [
+            "int count_matches(const std::vector<int>& data, int target) {",
+            "int count_matches(const std::vector<int> &data, int target) {",
+            "int count_matches(std::vector<int>& data, int target) {"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "Passing std::vector<int> by value triggers a full deep copy of the entire vector on every single call.", "correct": true },
+          { "id": "b", "text": "The range-based for loop skips the final element of std::vector.", "correct": false },
+          { "id": "c", "text": "++hits is slower than hits++ on primitive int types in modern C++.", "correct": false }
+        ],
+        "examRule": "In C++, containers passed by value are deep-copied every call, silently destroying performance in hot loops. Pass read-only containers as const std::vector<int>&."
+      },
+      {
+        "id": "d1-cpp-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "SYSTEMS MEMORY",
+        "filename": "format_tag.cpp",
+        "goal": "Build a formatted badge string for a user ID and return it safely to the caller.",
+        "lines": [
+          "const std::string& make_tag(int user_id) {",
+          "    std::string prefix = \"USR-\";",
+          "    std::string tag = prefix + std::to_string(user_id);",
+          "    return tag;",
+          "}",
+          "// Caller prints garbage or segfaults!"
+        ],
+        "flawLine": 4,
+        "nudge": "What happens to local stack variable tag the instant make_tag() returns?",
+        "crowdTrapByLine": { "1": 27, "2": 6, "3": 22, "4": 45 },
+        "crowdTrapText": "27% of students tapped Line 1 first",
+        "choices": [
+          { "id": "a", "text": "Returning a reference to local stack variable tag creates a dangling reference and undefined behavior once the stack frame pops.", "correct": true },
+          { "id": "b", "text": "std::to_string(user_id) allocates raw heap memory that leaks automatically.", "correct": false },
+          { "id": "c", "text": "Adding two std::string objects with + is illegal in C++.", "correct": false }
+        ],
+        "examRule": "Never return a reference or pointer to a local stack variable because its memory is destroyed when the function exits. Return std::string by value and let RVO optimize it."
+      }
+    ],
+    "java": [
+      {
+        "id": "d1-java-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "OOP EXAM TRAP",
+        "filename": "RoleCheck.java",
+        "goal": "Return true if the runtime user input string equals \"ADMIN\".",
+        "lines": [
+          "public boolean isAdmin(String input) {",
+          "  if (input == null) {",
+          "    return false;",
+          "  }",
+          "  if (input == \"ADMIN\") {",
+          "    return true;",
+          "  }",
+          "  return false;"
+        ],
+        "flawLine": 5,
+        "nudge": "In Java, == compares object memory references rather than the characters inside a String.",
+        "crowdTrapByLine": { "1": 4, "2": 31, "3": 5, "4": 3, "5": 48, "6": 5, "7": 4 },
+        "crowdTrapText": "31% of students tapped Line 2 first",
+        "patch": {
+          "tokens": ["\"ADMIN\"", ".equals(", "input", "if ("],
+          "accept": [
+            "if (\"ADMIN\".equals(input)) {",
+            "if (input.equals(\"ADMIN\")) {"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "== checks object reference equality rather than text content; use \"ADMIN\".equals(input) instead.", "correct": true },
+          { "id": "b", "text": "Checking input == null throws a NullPointerException before returning false.", "correct": false },
+          { "id": "c", "text": "Java String literals must be compared using single quotes.", "correct": false }
+        ],
+        "examRule": "Two identical Java Strings created at runtime often live at different heap addresses. Always compare text with .equals() rather than ==."
+      },
+      {
+        "id": "d1-java-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "COLLECTIONS TRAP",
+        "filename": "PruneTasks.java",
+        "goal": "Remove every blank task from an ArrayList without throwing a runtime exception.",
+        "lines": [
+          "public void pruneBlank(List<String> list) {",
+          "  for (String item : list) {",
+          "    if (item.isBlank()) {",
+          "      list.remove(item);",
+          "    }",
+          "  }",
+          "}"
+        ],
+        "flawLine": 4,
+        "nudge": "Java enhanced for-each loops use a fail-fast iterator that crashes if the list is modified directly.",
+        "crowdTrapByLine": { "1": 4, "2": 36, "3": 15, "4": 41, "5": 2, "6": 2 },
+        "crowdTrapText": "36% of students tapped Line 2 first",
+        "choices": [
+          { "id": "a", "text": "Calling list.remove(item) inside an enhanced for-each loop throws ConcurrentModificationException at runtime.", "correct": true },
+          { "id": "b", "text": "item.isBlank() crashes whenever a string contains only spaces.", "correct": false },
+          { "id": "c", "text": "List<String> is immutable unless cast to ArrayList<String>.", "correct": false }
+        ],
+        "examRule": "Never call list.remove() directly inside a Java enhanced for-each loop. Use list.removeIf(String::isBlank) or an explicit Iterator.remove()."
+      },
+      {
+        "id": "d1-java-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "STATE & REFERENCE",
+        "filename": "GradeBook.java",
+        "goal": "Store a defensive, encapsulated copy of exam scores so external callers cannot tamper with them.",
+        "lines": [
+          "public final class GradeBook {",
+          "  private final int[] scores;",
+          "  public GradeBook(int[] scores) {",
+          "    this.scores = scores;",
+          "  }",
+          "  public int getFirst() {",
+          "    return scores[0];",
+          "  }"
+        ],
+        "flawLine": 4,
+        "nudge": "Arrays in Java are mutable reference objects — what happens if the caller changes scores[0] right after constructing GradeBook?",
+        "crowdTrapByLine": { "1": 5, "2": 29, "3": 14, "4": 38, "5": 2, "6": 4, "7": 8 },
+        "crowdTrapText": "29% of students tapped Line 2 first",
+        "patch": {
+          "tokens": ["Arrays.copyOf(", "scores.length", "scores.clone()", "this.scores = "],
+          "accept": [
+            "this.scores = Arrays.copyOf(scores, scores.length);",
+            "this.scores = scores.clone();"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "Assigning this.scores = scores only copies the reference, letting external callers mutate internal array elements and break encapsulation.", "correct": true },
+          { "id": "b", "text": "Declaring scores as private final prevents it from being assigned inside the constructor.", "correct": false },
+          { "id": "c", "text": "Returning scores[0] exposes a mutable pointer to the first integer.", "correct": false }
+        ],
+        "examRule": "Marking an array reference final does not make its elements immutable. Always make a defensive copy with Arrays.copyOf(scores, scores.length) in constructors."
+      }
+    ],
+    "sql": [
+      {
+        "id": "d1-sql-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "QUERY LOGIC",
+        "filename": "busy_depts.sql",
+        "goal": "Return every department that currently runs more than 5 active courses.",
+        "lines": [
+          "SELECT dept_id, COUNT(*) AS total",
+          "FROM courses",
+          "WHERE COUNT(*) > 5",
+          "GROUP BY dept_id",
+          "ORDER BY total DESC;"
+        ],
+        "flawLine": 3,
+        "nudge": "WHERE runs before rows are grouped — which SQL clause filters aggregated groups?",
+        "crowdTrapByLine": { "1": 9, "2": 4, "3": 46, "4": 33, "5": 8 },
+        "crowdTrapText": "33% of students tapped Line 4 first",
+        "choices": [
+          { "id": "a", "text": "WHERE runs before GROUP BY and cannot filter aggregate functions; use HAVING COUNT(*) > 5 after GROUP BY.", "correct": true },
+          { "id": "b", "text": "COUNT(*) cannot be aliased with AS total in the SELECT clause.", "correct": false },
+          { "id": "c", "text": "ORDER BY total DESC must appear before GROUP BY.", "correct": false }
+        ],
+        "examRule": "Remember SQL execution order: WHERE filters raw rows before grouping, whereas HAVING filters aggregated groups after GROUP BY."
+      },
+      {
+        "id": "d1-sql-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "JOIN TRAP",
+        "filename": "user_orders.sql",
+        "goal": "List EVERY user alongside their paid orders, including users who have zero orders.",
+        "lines": [
+          "SELECT u.name, o.total",
+          "FROM users u",
+          "LEFT JOIN orders o",
+          "  ON u.id = o.user_id",
+          "WHERE o.status = 'PAID';"
+        ],
+        "flawLine": 5,
+        "nudge": "For a user with zero orders, o.status is NULL. What does WHERE o.status = 'PAID' do to that row?",
+        "crowdTrapByLine": { "1": 5, "2": 4, "3": 39, "4": 14, "5": 38 },
+        "crowdTrapText": "39% of students tapped Line 3 first",
+        "choices": [
+          { "id": "a", "text": "Filtering the right-hand table in WHERE drops all NULL-padded rows, silently converting the LEFT JOIN into an INNER JOIN.", "correct": true },
+          { "id": "b", "text": "LEFT JOIN requires the keyword OUTER to preserve unmatched users.", "correct": false },
+          { "id": "c", "text": "Table aliases u and o are invalid inside the ON condition.", "correct": false }
+        ],
+        "examRule": "Filtering a LEFT JOIN right-table column inside WHERE eliminates unmatched NULL rows. Move AND o.status = 'PAID' into the ON clause to keep all users."
+      },
+      {
+        "id": "d1-sql-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "SILENT NULL TRAP",
+        "filename": "non_managers.sql",
+        "goal": "Return all employees who are not listed as anyone's manager.",
+        "lines": [
+          "SELECT id, full_name",
+          "FROM employees",
+          "WHERE id NOT IN (",
+          "  SELECT manager_id",
+          "  FROM employees",
+          ");"
+        ],
+        "flawLine": 3,
+        "nudge": "The CEO has manager_id = NULL. In SQL three-valued logic, what does id != NULL evaluate to?",
+        "crowdTrapByLine": { "1": 4, "2": 5, "3": 37, "4": 34, "5": 16, "6": 4 },
+        "crowdTrapText": "34% of students tapped Line 4 first",
+        "choices": [
+          { "id": "a", "text": "If manager_id contains even one NULL, NOT IN evaluates to UNKNOWN for every row and silently returns 0 results; use NOT EXISTS.", "correct": true },
+          { "id": "b", "text": "A subquery cannot read from the same employees table as the outer query.", "correct": false },
+          { "id": "c", "text": "NOT IN requires an explicit ORDER BY inside the subquery.", "correct": false }
+        ],
+        "examRule": "A single NULL inside a NOT IN subquery poisons every comparison into UNKNOWN, returning an empty set. Always prefer NOT EXISTS or filter WHERE manager_id IS NOT NULL."
+      }
+    ]
+  },
+  {
+    "python": [
+      {
+        "id": "d2-py-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "STATE & REFERENCE",
+        "filename": "append_log.py",
+        "goal": "Create a fresh log list containing only entry whenever no existing logs list is passed.",
+        "lines": [
+          "def append_log(entry, logs=[]):",
+          "    logs.append(entry)",
+          "    return logs",
+          "# append_log(\"A\") -> [\"A\"]",
+          "# append_log(\"B\") -> [\"A\", \"B\"]!"
+        ],
+        "flawLine": 1,
+        "nudge": "When does Python evaluate default parameter values — on every call, or once at function definition?",
+        "crowdTrapByLine": { "1": 48, "2": 34, "3": 10, "4": 4, "5": 4 },
+        "crowdTrapText": "34% of students tapped Line 2 first",
+        "choices": [
+          { "id": "a", "text": "Default mutable arguments like logs=[] are created once at definition time and shared across every subsequent call.", "correct": true },
+          { "id": "b", "text": "logs.append(entry) mutates a global variable named logs outside the function.", "correct": false },
+          { "id": "c", "text": "Python lists cannot be returned directly from a function without calling list.copy().", "correct": false }
+        ],
+        "examRule": "Never use a mutable object ([], {}) as a Python default argument. Default to None and initialize inside the function: if logs is None: logs = []."
+      },
+      {
+        "id": "d2-py-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "QUANT NUMERICS",
+        "filename": "settlement.py",
+        "goal": "Verify that a list of trade amounts in dollars sums closely enough to the expected settlement figure.",
+        "lines": [
+          "def check_settlement(trades, expected):",
+          "    total = 0.0",
+          "    for price in trades:",
+          "        total += price",
+          "    return total == expected",
+          "# trades=[0.1, 0.2], expected=0.3 returns False!"
+        ],
+        "flawLine": 5,
+        "nudge": "How are base-10 decimals like 0.1 and 0.2 represented in IEEE 754 binary floating-point?",
+        "crowdTrapByLine": { "1": 3, "2": 18, "3": 6, "4": 29, "5": 44 },
+        "crowdTrapText": "29% of students tapped Line 4 first",
+        "patch": {
+          "tokens": ["math.isclose(", "total, expected)", "abs(total - expected) < 1e-9"],
+          "accept": [
+            "return math.isclose(total, expected)",
+            "return math.isclose(expected, total)",
+            "return abs(total - expected) < 1e-9"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "Binary floats cannot represent 0.1 or 0.2 exactly (0.1 + 0.2 = 0.30000000000000004), so exact == comparison fails.", "correct": true },
+          { "id": "b", "text": "Initializing total = 0.0 causes Python to truncate decimals during += addition.", "correct": false },
+          { "id": "c", "text": "The == operator checks memory identity rather than numeric value for floats.", "correct": false }
+        ],
+        "examRule": "Never use raw IEEE 754 floats with == for financial settlement. Use integer cents, decimal.Decimal, or math.isclose() with an explicit tolerance."
+      },
+      {
+        "id": "d2-py-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "CLOSURE BINDING",
+        "filename": "make_scalers.py",
+        "goal": "Return a list of functions where each function multiplies its input by its corresponding factor.",
+        "lines": [
+          "def make_scalers(factors):",
+          "    funcs = []",
+          "    for f in factors:",
+          "        funcs.append(lambda x: x * f)",
+          "    return funcs",
+          "# Every returned function multiplies by the LAST factor!"
+        ],
+        "flawLine": 4,
+        "nudge": "Does the lambda capture the current value of f, or a live reference to the loop variable f?",
+        "crowdTrapByLine": { "1": 3, "2": 6, "3": 32, "4": 53, "5": 6 },
+        "crowdTrapText": "32% of students tapped Line 3 first",
+        "patch": {
+          "tokens": ["lambda x, f=f:", "x * f)", "funcs.append("],
+          "accept": [
+            "funcs.append(lambda x, f=f: x * f)"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "Python closures use late binding, so every lambda looks up f when called — seeing only the final loop value. Fix with lambda x, f=f: x * f.", "correct": true },
+          { "id": "b", "text": "funcs.append() overwrites earlier lambdas because anonymous functions share one memory slot.", "correct": false },
+          { "id": "c", "text": "Lambda expressions cannot reference variables defined inside a for loop.", "correct": false }
+        ],
+        "examRule": "Python closures bind loop variables by name, not by value at creation time. Capture the current value via a default argument: lambda x, f=f: x * f."
+      }
+    ],
+    "cpp": [
+      {
+        "id": "d2-cpp-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "TYPE TRUNCATION",
+        "filename": "avg_score.cpp",
+        "goal": "Return the exact floating-point average score across num_exams.",
+        "lines": [
+          "double average_score(int total_points, int num_exams) {",
+          "    if (num_exams == 0) return 0.0;",
+          "    double avg = total_points / num_exams;",
+          "    return avg;",
+          "}",
+          "// average_score(5, 2) returns 2.0 instead of 2.5!"
+        ],
+        "flawLine": 3,
+        "nudge": "What are the types of total_points and num_exams at the moment the / operator runs?",
+        "crowdTrapByLine": { "1": 18, "2": 7, "3": 68, "4": 7 },
+        "crowdTrapText": "18% of students tapped Line 1 first",
+        "patch": {
+          "tokens": ["static_cast<double>(", "(double)", "total_points", "num_exams"],
+          "accept": [
+            "re:/^double\\s+avg\\s*=\\s*static_cast<double>\\(\\s*total_points\\s*\\)\\s*\\/\\s*num_exams\\s*;$/",
+            "re:/^double\\s+avg\\s*=\\s*total_points\\s*\\/\\s*static_cast<double>\\(\\s*num_exams\\s*\\)\\s*;$/",
+            "re:/^double\\s+avg\\s*=\\s*\\(double\\)\\s*total_points\\s*\\/\\s*num_exams\\s*;$/",
+            "re:/^double\\s+avg\\s*=\\s*total_points\\s*\\/\\s*\\(double\\)\\s*num_exams\\s*;$/"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "Dividing two ints performs integer division and truncates the remainder before assigning to double; cast one operand to double first.", "correct": true },
+          { "id": "b", "text": "Assigning to double rounds down to the nearest even integer.", "correct": false },
+          { "id": "c", "text": "num_exams == 0 converts num_exams to a boolean before line 3.", "correct": false }
+        ],
+        "examRule": "In C++, the destination type does not change how the right-hand expression is evaluated. Cast at least one operand: static_cast<double>(total_points) / num_exams."
+      },
+      {
+        "id": "d2-cpp-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "STL MAP TRAP",
+        "filename": "count_zeros.cpp",
+        "goal": "Count how many queried keys exist in freq with a stored value of 0, without mutating the map.",
+        "lines": [
+          "int count_zeros(std::unordered_map<int, int>& freq,",
+          "                const std::vector<int>& queries) {",
+          "    int hits = 0;",
+          "    for (int q : queries) {",
+          "        if (freq[q] == 0) ++hits;",
+          "    }",
+          "    return hits;",
+          "}"
+        ],
+        "flawLine": 5,
+        "nudge": "What does std::unordered_map::operator[] do when key q is NOT currently in the map?",
+        "crowdTrapByLine": { "1": 19, "2": 4, "3": 3, "4": 11, "5": 55, "6": 4, "7": 4 },
+        "crowdTrapText": "19% of students tapped Line 1 first",
+        "choices": [
+          { "id": "a", "text": "freq[q] silently default-inserts missing keys with value 0, both falsely incrementing hits and bloating the map.", "correct": true },
+          { "id": "b", "text": "freq[q] throws std::out_of_range whenever q is missing from the map.", "correct": false },
+          { "id": "c", "text": "unordered_map keys cannot be looked up using a primitive int.", "correct": false }
+        ],
+        "examRule": "In C++, map[key] inserts a default-initialized entry if the key does not exist. Always use freq.find(q) != freq.end() for read-only lookups."
+      },
+      {
+        "id": "d2-cpp-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "SYSTEMS MEMORY",
+        "filename": "order_base.cpp",
+        "goal": "Allow derived LimitOrder objects to be safely deleted via a base Order* pointer without leaking memory.",
+        "lines": [
+          "class Order {",
+          "public:",
+          "    ~Order() = default;",
+          "};",
+          "class LimitOrder : public Order {",
+          "    std::vector<double> fills;",
+          "};",
+          "// delete base_ptr leaks fills & is UB!"
+        ],
+        "flawLine": 3,
+        "nudge": "If a base class destructor is not declared virtual, which destructor runs when deleting via Order*?",
+        "crowdTrapByLine": { "1": 9, "2": 4, "3": 43, "4": 4, "5": 14, "6": 26 },
+        "crowdTrapText": "26% of students tapped Line 6 first",
+        "patch": {
+          "tokens": ["virtual ", "~Order()", "= default;", "{}"],
+          "accept": [
+            "virtual ~Order() = default;",
+            "virtual ~Order() {}"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "Deleting a derived object through a base pointer without a virtual destructor is undefined behavior and skips ~LimitOrder(), leaking fills.", "correct": true },
+          { "id": "b", "text": "std::vector<double> fills is private and therefore cannot be freed automatically.", "correct": false },
+          { "id": "c", "text": "Defaulted destructors disable RAII for all member variables in C++.", "correct": false }
+        ],
+        "examRule": "Any polymorphic C++ base class intended for deletion via base pointer MUST declare a virtual destructor (virtual ~Order() = default;)."
+      }
+    ],
+    "java": [
+      {
+        "id": "d2-java-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "AUTOBOXING TRAP",
+        "filename": "BoxedCompare.java",
+        "goal": "Return true whenever two non-null boxed Integer exam scores hold the exact same numeric value.",
+        "lines": [
+          "public boolean sameScore(Integer a, Integer b) {",
+          "  if (a == null || b == null) {",
+          "    return false;",
+          "  }",
+          "  return a == b;",
+          "}",
+          "// sameScore(100, 100) is true, sameScore(500, 500) is false!"
+        ],
+        "flawLine": 5,
+        "nudge": "Java caches boxed Integer instances only between -128 and 127.",
+        "crowdTrapByLine": { "1": 12, "2": 24, "3": 4, "4": 3, "5": 53, "6": 4 },
+        "crowdTrapText": "24% of students tapped Line 2 first",
+        "patch": {
+          "tokens": ["return ", "a.equals(b);", "Objects.equals(a, b);"],
+          "accept": [
+            "return a.equals(b);",
+            "return b.equals(a);",
+            "return Objects.equals(a, b);"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "== compares object references on boxed Integer objects; outside the -128..127 cache, distinct objects return false. Use a.equals(b).", "correct": true },
+          { "id": "b", "text": "Boxed Integer values cannot exceed 127 without overflowing to negative numbers.", "correct": false },
+          { "id": "c", "text": "Comparing a == null triggers a NullPointerException when a is null.", "correct": false }
+        ],
+        "examRule": "Never compare boxed Java wrappers (Integer, Long, Double) with ==. Always use .equals() or unbox to primitives first."
+      },
+      {
+        "id": "d2-java-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "IMMUTABILITY TRAP",
+        "filename": "Normalize.java",
+        "goal": "Strip surrounding whitespace from email, convert it to lowercase, and return the cleaned result.",
+        "lines": [
+          "public String cleanEmail(String email) {",
+          "  if (email == null) return \"\";",
+          "  email.trim().toLowerCase();",
+          "  return email;",
+          "}",
+          "// \"  A@B.COM \" still returns \"  A@B.COM \"!"
+        ],
+        "flawLine": 3,
+        "nudge": "Java Strings are immutable — where does the new cleaned String go on Line 3?",
+        "crowdTrapByLine": { "1": 4, "2": 12, "3": 71, "4": 13 },
+        "crowdTrapText": "13% of students tapped Line 4 first",
+        "patch": {
+          "tokens": ["email = ", "return ", "email.trim().toLowerCase();"],
+          "accept": [
+            "email = email.trim().toLowerCase();",
+            "return email.trim().toLowerCase();"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "String is immutable, so trim() and toLowerCase() return a new String that is discarded unless assigned back to email.", "correct": true },
+          { "id": "b", "text": "trim() cannot be chained directly with toLowerCase() in Java.", "correct": false },
+          { "id": "c", "text": "toLowerCase() only converts the first character of a String.", "correct": false }
+        ],
+        "examRule": "Java Strings never mutate in-place. Always capture or return the result of String transformations: return email.trim().toLowerCase();."
+      },
+      {
+        "id": "d2-java-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "HASHMAP CONTRACT",
+        "filename": "UserKey.java",
+        "goal": "Allow UserKey instances with the same id to match reliably as keys inside a HashMap.",
+        "lines": [
+          "public class UserKey {",
+          "  private final int id;",
+          "  public UserKey(int id) { this.id = id; }",
+          "  @Override",
+          "  public boolean equals(Object o) {",
+          "    return o instanceof UserKey u && u.id == id;",
+          "  }",
+          "}"
+        ],
+        "flawLine": 5,
+        "nudge": "HashMap looks up a key's bucket BEFORE calling equals(). What method is missing here?",
+        "crowdTrapByLine": { "1": 11, "2": 8, "3": 10, "4": 4, "5": 39, "6": 28 },
+        "crowdTrapText": "28% of students tapped Line 6 first",
+        "choices": [
+          { "id": "a", "text": "Overriding equals() without overriding hashCode() breaks the HashMap contract, placing equal keys into different buckets.", "correct": true },
+          { "id": "b", "text": "Pattern matching with instanceof UserKey u fails when comparing two distinct objects.", "correct": false },
+          { "id": "c", "text": "private final int id cannot be accessed from another UserKey instance inside equals().", "correct": false }
+        ],
+        "examRule": "Whenever you override equals() in Java, you MUST also override hashCode() using the same fields (e.g. Objects.hash(id)), or HashMap/HashSet lookups will silently miss."
+      }
+    ],
+    "sql": [
+      {
+        "id": "d2-sql-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "NULL COMPARISON",
+        "filename": "no_bonus.sql",
+        "goal": "Return all employees whose bonus column is currently NULL.",
+        "lines": [
+          "SELECT emp_id, full_name",
+          "FROM employees",
+          "WHERE bonus = NULL",
+          "ORDER BY emp_id ASC;"
+        ],
+        "flawLine": 3,
+        "nudge": "In SQL three-valued logic, does NULL ever equal NULL using the = operator?",
+        "crowdTrapByLine": { "1": 5, "2": 4, "3": 78, "4": 13 },
+        "crowdTrapText": "13% of students tapped Line 4 first",
+        "patch": {
+          "tokens": ["WHERE", "bonus", "IS NULL"],
+          "accept": ["re:/^where\\s+bonus\\s+is\\s+null$/i"]
+        },
+        "choices": [
+          { "id": "a", "text": "bonus = NULL evaluates to UNKNOWN rather than TRUE, returning 0 rows; use WHERE bonus IS NULL.", "correct": true },
+          { "id": "b", "text": "NULL must be wrapped in single quotes as 'NULL' in WHERE clauses.", "correct": false },
+          { "id": "c", "text": "ORDER BY emp_id ASC cannot be used when filtering NULL values.", "correct": false }
+        ],
+        "examRule": "In SQL, nothing equals NULL — not even NULL itself. Always check for missing values using IS NULL or IS NOT NULL."
+      },
+      {
+        "id": "d2-sql-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "AGGREGATION TRAP",
+        "filename": "avg_bonus.sql",
+        "goal": "Compute the average bonus across ALL employees per department, treating NULL bonuses as 0.",
+        "lines": [
+          "SELECT dept_id,",
+          "       AVG(bonus) AS avg_bonus",
+          "FROM employees",
+          "GROUP BY dept_id;",
+          "-- Employees with NULL bonus are skipped!"
+        ],
+        "flawLine": 2,
+        "nudge": "Does SQL AVG(col) include NULL rows in its denominator, or ignore them completely?",
+        "crowdTrapByLine": { "1": 6, "2": 61, "3": 5, "4": 28 },
+        "crowdTrapText": "28% of students tapped Line 4 first",
+        "patch": {
+          "tokens": ["AVG(", "COALESCE(bonus, 0)", "AS avg_bonus"],
+          "accept": ["re:/^avg\\(\\s*coalesce\\(\\s*bonus\\s*,\\s*0\\s*\\)\\s*\\)\\s+as\\s+avg_bonus$/i"]
+        },
+        "choices": [
+          { "id": "a", "text": "AVG(bonus) completely excludes NULL rows from the denominator, inflating the average; use AVG(COALESCE(bonus, 0)).", "correct": true },
+          { "id": "b", "text": "AVG(bonus) returns NULL for the entire department if even one row is NULL.", "correct": false },
+          { "id": "c", "text": "GROUP BY dept_id automatically removes any employee with a NULL bonus.", "correct": false }
+        ],
+        "examRule": "SQL aggregate functions like AVG(), SUM(), and COUNT(col) ignore NULLs. Wrap nullable numeric columns in COALESCE(col, 0) when NULLs should count as zero."
+      },
+      {
+        "id": "d2-sql-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "JOIN FAN-OUT",
+        "filename": "user_metrics.sql",
+        "goal": "Compute each user's true total order spend alongside their total support ticket count.",
+        "lines": [
+          "SELECT u.id,",
+          "       SUM(o.amount) AS total_spend,",
+          "       COUNT(t.id) AS ticket_count",
+          "FROM users u",
+          "LEFT JOIN orders o ON u.id = o.user_id",
+          "LEFT JOIN tickets t ON u.id = t.user_id",
+          "GROUP BY u.id;"
+        ],
+        "flawLine": 6,
+        "nudge": "If a user has 2 orders and 3 tickets, how many joined rows are created before SUM(o.amount) runs?",
+        "crowdTrapByLine": { "1": 3, "2": 26, "3": 24, "4": 3, "5": 11, "6": 29, "7": 4 },
+        "crowdTrapText": "26% of students tapped Line 2 first",
+        "choices": [
+          { "id": "a", "text": "Joining two one-to-many tables directly creates a Cartesian fan-out per user, multiplying every order amount by their ticket count.", "correct": true },
+          { "id": "b", "text": "Two LEFT JOIN clauses cannot both reference u.id in the same query.", "correct": false },
+          { "id": "c", "text": "COUNT(t.id) counts NULL values when using LEFT JOIN.", "correct": false }
+        ],
+        "examRule": "Never join two independent one-to-many child tables directly to the same parent before aggregating. Pre-aggregate each child table in separate CTEs or subqueries first."
+      }
+    ]
+  },
+  {
+    "python": [
+      {
+        "id": "d3-py-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "OA EDGE CASE",
+        "filename": "strip_evens.py",
+        "goal": "Remove every even number from the list in-place and return only the odd numbers.",
+        "lines": [
+          "def strip_evens(nums):",
+          "    for x in nums:",
+          "        if x % 2 == 0:",
+          "            nums.remove(x)",
+          "    return nums",
+          "# Input [2, 4, 5] returns [4, 5]!"
+        ],
+        "flawLine": 4,
+        "nudge": "Removing an element shifts every remaining item left while the loop index moves forward.",
+        "crowdTrapByLine": { "1": 4, "2": 49, "3": 11, "4": 32, "5": 4 },
+        "crowdTrapText": "49% of students tapped Line 2 first",
+        "choices": [
+          { "id": "a", "text": "Mutating the list while iterating shifts indices left, silently skipping consecutive even numbers.", "correct": true },
+          { "id": "b", "text": "The modulo operator % returns a float instead of an integer in Python.", "correct": false },
+          { "id": "c", "text": "nums.remove(x) deletes by index position rather than by matching value.", "correct": false }
+        ],
+        "examRule": "Never mutate a Python list while iterating directly over it. Build a new list with a comprehension like [x for x in nums if x % 2 != 0] instead."
+      },
+      {
+        "id": "d3-py-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "SORTING TRAP",
+        "filename": "top_scores.py",
+        "goal": "Return the 3 highest scores in descending order without mutating the original list.",
+        "lines": [
+          "def top_scores(scores):",
+          "    ranked = scores.sort(reverse=True)",
+          "    return ranked[:3]",
+          "# TypeError: NoneType object is not subscriptable!"
+        ],
+        "flawLine": 2,
+        "nudge": "What does list.sort() return in Python, and which built-in returns a new sorted list?",
+        "crowdTrapByLine": { "1": 4, "2": 64, "3": 28, "4": 4 },
+        "crowdTrapText": "28% of students tapped Line 3 first",
+        "patch": {
+          "tokens": ["sorted(", "scores, ", "reverse=True)", "ranked = "],
+          "accept": [
+            "ranked = sorted(scores, reverse=True)"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "list.sort() sorts in-place and returns None; use sorted(scores, reverse=True) to return a new sorted list.", "correct": true },
+          { "id": "b", "text": "reverse=True is only valid on tuples, not Python lists.", "correct": false },
+          { "id": "c", "text": "Slicing [:3] fails if the list has more than 3 elements.", "correct": false }
+        ],
+        "examRule": "In Python, list.sort() mutates in-place and returns None (by design in PEP 8/stdlib). Use sorted(iterable, reverse=True) whenever you need a new sorted list."
+      },
+      {
+        "id": "d3-py-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "OA ARITHMETIC",
+        "filename": "trunc_div.py",
+        "goal": "Divide integer a by non-zero integer b, truncating toward zero (like C++/Java/RPN OAs).",
+        "lines": [
+          "def trunc_divide(a, b):",
+          "    \"\"\"Divide a by b, truncating toward zero.\"\"\"",
+          "    return a // b",
+          "# trunc_divide(-7, 2) returns -4 instead of -3!"
+        ],
+        "flawLine": 3,
+        "nudge": "In Python, does // truncate toward zero or floor toward negative infinity?",
+        "crowdTrapByLine": { "1": 5, "2": 4, "3": 82, "4": 9 },
+        "crowdTrapText": "9% of students tapped Line 4 first",
+        "patch": {
+          "tokens": ["return ", "int(", "a / b)"],
+          "accept": [
+            "return int(a / b)"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "Python's // operator floors toward negative infinity (-7 // 2 == -4); use int(a / b) to truncate toward zero.", "correct": true },
+          { "id": "b", "text": "Python // performs floating-point division when either operand is negative.", "correct": false },
+          { "id": "c", "text": "Negative numerators must be wrapped in abs() before using /.", "correct": false }
+        ],
+        "examRule": "Classic Python OA trap (e.g., Evaluate Reverse Polish Notation): // floors toward -∞, whereas int(a / b) truncates toward 0."
+      }
+    ],
+    "cpp": [
+      {
+        "id": "d3-cpp-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "UNSIGNED UNDERFLOW",
+        "filename": "reverse_print.cpp",
+        "goal": "Print all elements of vector a from the last index down to index 0.",
+        "lines": [
+          "void print_reverse(const std::vector<int>& a) {",
+          "    for (std::size_t i = a.size() - 1; i >= 0; --i) {",
+          "        std::cout << a[i] << \" \";",
+          "    }",
+          "}",
+          "// Crashes with out-of-bounds read after i = 0!"
+        ],
+        "flawLine": 2,
+        "nudge": "std::size_t is an unsigned integer type — what happens when you decrement 0?",
+        "crowdTrapByLine": { "1": 6, "2": 52, "3": 28, "4": 4, "5": 4, "6": 6 },
+        "crowdTrapText": "28% of students tapped Line 3 first",
+        "choices": [
+          { "id": "a", "text": "std::size_t is unsigned, so i >= 0 is always true; decrementing 0 wraps around to SIZE_MAX and triggers an infinite out-of-bounds loop.", "correct": true },
+          { "id": "b", "text": "Prefix --i skips index 0 before printing a[0].", "correct": false },
+          { "id": "c", "text": "a.size() returns a signed int that overflows when subtracting 1.", "correct": false }
+        ],
+        "examRule": "Never write a countdown loop with an unsigned index and i >= 0. Use reverse iterators (rbegin/rend) or a signed std::ptrdiff_t/int index."
+      },
+      {
+        "id": "d3-cpp-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "INT OVERFLOW",
+        "filename": "rect_area.cpp",
+        "goal": "Return the exact 64-bit area of a rectangle with width and height up to 1,000,000.",
+        "lines": [
+          "long long rect_area(int width, int height) {",
+          "    long long area = width * height;",
+          "    return area;",
+          "}",
+          "// rect_area(100000, 100000) overflows signed 32-bit int!"
+        ],
+        "flawLine": 2,
+        "nudge": "Both width and height are 32-bit ints — does the multiplication happen before or after converting to long long?",
+        "crowdTrapByLine": { "1": 16, "2": 74, "3": 6, "4": 4 },
+        "crowdTrapText": "16% of students tapped Line 1 first",
+        "patch": {
+          "tokens": ["static_cast<long long>(", "1LL * ", "width", "height"],
+          "accept": [
+            "re:/^long\\s+long\\s+area\\s*=\\s*static_cast<long\\s+long>\\(\\s*width\\s*\\)\\s*\\*\\s*height\\s*;$/",
+            "re:/^long\\s+long\\s+area\\s*=\\s*width\\s*\\*\\s*static_cast<long\\s+long>\\(\\s*height\\s*\\)\\s*;$/",
+            "re:/^long\\s+long\\s+area\\s*=\\s*1LL\\s*\\*\\s*width\\s*\\*\\s*height\\s*;$/i",
+            "re:/^long\\s+long\\s+area\\s*=\\s*\\(long\\s+long\\)\\s*width\\s*\\*\\s*height\\s*;$/"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "width * height is evaluated as 32-bit int multiplication and overflows (UB) before being widened to long long.", "correct": true },
+          { "id": "b", "text": "long long cannot hold values larger than 2^31 - 1 in C++.", "correct": false },
+          { "id": "c", "text": "Returning area by value truncates a 64-bit long long to 32-bit int.", "correct": false }
+        ],
+        "examRule": "In C++, int * int overflows BEFORE assignment to long long. Cast one operand first: static_cast<long long>(width) * height."
+      },
+      {
+        "id": "d3-cpp-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "QUANT / HFT TRAP",
+        "filename": "check_order.cpp",
+        "goal": "Return true whenever the cart size is greater than the signed threshold min_items.",
+        "lines": [
+          "bool has_discount(const std::vector<int>& cart) {",
+          "    int min_items = -1;",
+          "    if (cart.size() > min_items) {",
+          "        return true;",
+          "    }",
+          "    return false;",
+          "}",
+          "// Returns FALSE even when cart has 3 items!"
+        ],
+        "flawLine": 3,
+        "nudge": "What happens under C++ usual arithmetic conversions when comparing unsigned std::size_t with signed int (-1)?",
+        "crowdTrapByLine": { "1": 5, "2": 33, "3": 54, "4": 4, "5": 2, "6": 2 },
+        "crowdTrapText": "33% of students tapped Line 2 first",
+        "patch": {
+          "tokens": ["std::cmp_greater(", "static_cast<int>(", "cart.size()", "min_items"],
+          "accept": [
+            "if (std::cmp_greater(cart.size(), min_items)) {",
+            "if (static_cast<int>(cart.size()) > min_items) {",
+            "if (std::ssize(cart) > min_items) {"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "Comparing unsigned size_t with signed int converts -1 to SIZE_MAX (a massive positive number), making 3 > SIZE_MAX evaluate to false.", "correct": true },
+          { "id": "b", "text": "cart.size() returns a negative offset when passed by const reference.", "correct": false },
+          { "id": "c", "text": "Signed int variables cannot be initialized to negative values in C++.", "correct": false }
+        ],
+        "examRule": "Mixing signed and unsigned integers in C++ comparisons converts the signed value to unsigned, turning -1 into SIZE_MAX. Use std::cmp_greater or std::ssize (C++20)."
+      }
+    ],
+    "java": [
+      {
+        "id": "d3-java-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "OVERLOAD TRAP",
+        "filename": "RemoveVal.java",
+        "goal": "Remove the first occurrence of integer value val from the List<Integer>.",
+        "lines": [
+          "public void removeValue(List<Integer> nums, int val) {",
+          "  if (nums.contains(val)) {",
+          "    nums.remove(val);",
+          "  }",
+          "}",
+          "// removeValue([10, 20, 30], 10) throws IndexOutOfBoundsException!"
+        ],
+        "flawLine": 3,
+        "nudge": "List<Integer> has two remove() overloads: remove(int index) and remove(Object o). Which one matches primitive int val?",
+        "crowdTrapByLine": { "1": 17, "2": 21, "3": 58, "4": 2, "5": 2 },
+        "crowdTrapText": "21% of students tapped Line 2 first",
+        "patch": {
+          "tokens": ["Integer.valueOf(", "(Integer)", "nums.remove(", "val);"],
+          "accept": [
+            "nums.remove(Integer.valueOf(val));",
+            "nums.remove((Integer) val);"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "Passing primitive int val invokes List.remove(int index) instead of remove(Object); use nums.remove(Integer.valueOf(val)).", "correct": true },
+          { "id": "b", "text": "nums.contains(val) cannot search a List<Integer> using a primitive int.", "correct": false },
+          { "id": "c", "text": "List.remove() deletes all occurrences and shifts the list out of bounds.", "correct": false }
+        ],
+        "examRule": "On a List<Integer>, calling remove(int) deletes by INDEX, not by VALUE. Always box explicitly with Integer.valueOf(val) to delete by value."
+      },
+      {
+        "id": "d3-java-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "OA EDGE CASE",
+        "filename": "BinarySearch.java",
+        "goal": "Return the index of target in a huge sorted array without risking 32-bit integer overflow.",
+        "lines": [
+          "public int binarySearch(int[] nums, int target) {",
+          "  int low = 0, high = nums.length - 1;",
+          "  while (low <= high) {",
+          "    int mid = (low + high) / 2;",
+          "    if (nums[mid] == target) return mid;",
+          "    if (nums[mid] < target) low = mid + 1;",
+          "    else high = mid - 1;",
+          "  }",
+          "  return -1;"
+        ],
+        "flawLine": 4,
+        "nudge": "What happens to (low + high) when both indices exceed 1.1 billion in Java's signed 32-bit int?",
+        "crowdTrapByLine": { "1": 4, "2": 22, "3": 29, "4": 38, "5": 3, "6": 2, "7": 2 },
+        "crowdTrapText": "29% of students tapped Line 3 first",
+        "patch": {
+          "tokens": ["low + (high - low) / 2;", "(low + high) >>> 1;", "int mid = "],
+          "accept": [
+            "int mid = low + (high - low) / 2;",
+            "int mid = (low + high) >>> 1;"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "(low + high) can overflow a signed 32-bit int and become negative; use low + (high - low) / 2 or (low + high) >>> 1.", "correct": true },
+          { "id": "b", "text": "nums.length - 1 throws ArrayIndexOutOfBoundsException on a 1-element array.", "correct": false },
+          { "id": "c", "text": "Java / 2 rounds toward positive infinity instead of truncating.", "correct": false }
+        ],
+        "examRule": "Famous JDK bug (Arrays.binarySearch): (low + high) / 2 overflows for large arrays. Use low + (high - low) / 2 or Java's unsigned right shift (low + high) >>> 1."
+      },
+      {
+        "id": "d3-java-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "CONCURRENCY",
+        "filename": "RequestCounter.java",
+        "goal": "Safely increment a shared counter across multiple concurrent worker threads without losing counts.",
+        "lines": [
+          "public class RequestCounter {",
+          "  private volatile int count = 0;",
+          "  public void increment() {",
+          "    count++;",
+          "  }",
+          "  public int get() { return count; }",
+          "}"
+        ],
+        "flawLine": 4,
+        "nudge": "volatile guarantees memory visibility across threads, but is count++ a single atomic CPU instruction?",
+        "crowdTrapByLine": { "1": 4, "2": 36, "3": 11, "4": 44, "5": 2, "6": 3 },
+        "crowdTrapText": "36% of students tapped Line 2 first",
+        "choices": [
+          { "id": "a", "text": "volatile guarantees visibility, not atomicity; count++ is a 3-step read-modify-write race condition. Use AtomicInteger instead.", "correct": true },
+          { "id": "b", "text": "volatile prevents count from ever being incremented inside a void method.", "correct": false },
+          { "id": "c", "text": "get() must be marked synchronized even when count is volatile.", "correct": false }
+        ],
+        "examRule": "In Java concurrency, volatile ensures threads see the latest write, NOT atomic compound updates like count++. Use AtomicInteger or synchronized for counters."
+      }
+    ],
+    "sql": [
+      {
+        "id": "d3-sql-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "BOOLEAN LOGIC",
+        "filename": "active_staff.sql",
+        "goal": "Return only ACTIVE users whose role is either ADMIN or STAFF.",
+        "lines": [
+          "SELECT id, email",
+          "FROM users",
+          "WHERE is_active = 1",
+          "  AND role = 'ADMIN' OR role = 'STAFF';",
+          "-- Leaks INACTIVE staff accounts!"
+        ],
+        "flawLine": 4,
+        "nudge": "Which operator has higher precedence in SQL: AND or OR?",
+        "crowdTrapByLine": { "1": 4, "2": 3, "3": 24, "4": 69 },
+        "crowdTrapText": "24% of students tapped Line 3 first",
+        "patch": {
+          "tokens": ["AND (", "OR role = 'STAFF');", "AND role IN ('ADMIN', 'STAFF');"],
+          "accept": [
+            "re:/^and\\s*\\(\\s*role\\s*=\\s*'admin'\\s+or\\s+role\\s*=\\s*'staff'\\s*\\)\\s*;?$/i",
+            "re:/^and\\s+role\\s+in\\s*\\(\\s*'admin'\\s*,\\s*'staff'\\s*\\)\\s*;?$/i"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "AND binds tighter than OR, evaluating as (is_active = 1 AND ADMIN) OR (any STAFF); wrap the OR in parentheses or use role IN (...).", "correct": true },
+          { "id": "b", "text": "OR cannot compare the same column role twice in a WHERE clause.", "correct": false },
+          { "id": "c", "text": "is_active = 1 must come after the OR condition to apply to both roles.", "correct": false }
+        ],
+        "examRule": "AND always has higher precedence than OR in SQL. Always group OR conditions with parentheses or use IN ('ADMIN', 'STAFF')."
+      },
+      {
+        "id": "d3-sql-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "WINDOW FUNCTIONS",
+        "filename": "top_earner.sql",
+        "goal": "Return the single highest-paid employee in each department using standard SQL.",
+        "lines": [
+          "SELECT emp_id, dept_id, salary",
+          "FROM employees",
+          "WHERE ROW_NUMBER() OVER (",
+          "  PARTITION BY dept_id ORDER BY salary DESC",
+          ") = 1;"
+        ],
+        "flawLine": 3,
+        "nudge": "In SQL logical execution order, does WHERE run before or after window functions?",
+        "crowdTrapByLine": { "1": 6, "2": 4, "3": 58, "4": 24, "5": 8 },
+        "crowdTrapText": "24% of students tapped Line 4 first",
+        "choices": [
+          { "id": "a", "text": "Window functions execute after WHERE, so ROW_NUMBER() cannot be filtered directly in WHERE; compute it in a CTE/subquery first.", "correct": true },
+          { "id": "b", "text": "ROW_NUMBER() requires a GROUP BY dept_id clause at the end of the query.", "correct": false },
+          { "id": "c", "text": "ORDER BY salary DESC is not allowed inside an OVER() clause.", "correct": false }
+        ],
+        "examRule": "In standard SQL, window functions are evaluated during SELECT — after WHERE and GROUP BY. Wrap the window query in a CTE and filter WHERE rn = 1 outside."
+      },
+      {
+        "id": "d3-sql-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "DATA INTEGRITY",
+        "filename": "global_sales.sql",
+        "goal": "Combine every individual sale amount from both US and UK ledgers without losing identical prices.",
+        "lines": [
+          "SELECT amount FROM us_sales",
+          "UNION",
+          "SELECT amount FROM uk_sales;",
+          "-- Duplicate £49.99 sales across tables get dropped!"
+        ],
+        "flawLine": 2,
+        "nudge": "What extra operation does UNION perform behind the scenes compared to UNION ALL?",
+        "crowdTrapByLine": { "1": 11, "2": 74, "3": 15 },
+        "crowdTrapText": "15% of students tapped Line 3 first",
+        "patch": {
+          "tokens": ["UNION ALL"],
+          "accept": ["re:/^union\\s+all$/i"]
+        },
+        "choices": [
+          { "id": "a", "text": "UNION implicitly deduplicates identical rows across both tables, silently dropping matching sale amounts; use UNION ALL.", "correct": true },
+          { "id": "b", "text": "UNION only keeps rows that exist in both us_sales and uk_sales.", "correct": false },
+          { "id": "c", "text": "UNION cannot combine two tables that share the same column name amount.", "correct": false }
+        ],
+        "examRule": "UNION performs an implicit DISTINCT (both slower and destructive for financial sums). Always use UNION ALL unless you intentionally want duplicate rows removed."
+      }
+    ]
+  },
+  {
+    "python": [
+      {
+        "id": "d4-py-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "IDENTITY VS EQUALITY",
+        "filename": "check_status.py",
+        "goal": "Return True if the runtime HTTP status string equals \"OK\".",
+        "lines": [
+          "def is_ok(status):",
+          "    if status is \"OK\":",
+          "        return True",
+          "    return False",
+          "# Fails when status is built dynamically at runtime!"
+        ],
+        "flawLine": 2,
+        "nudge": "Does Python's `is` operator compare string contents or object memory addresses?",
+        "crowdTrapByLine": { "1": 4, "2": 76, "3": 8, "4": 12 },
+        "crowdTrapText": "12% of students tapped Line 4 first",
+        "patch": {
+          "tokens": ["if ", "status == \"OK\":", "=="],
+          "accept": [
+            "if status == \"OK\":",
+            "if status == 'OK':"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "`is` checks object identity (memory address), not value equality; use `status == \"OK\"`.", "correct": true },
+          { "id": "b", "text": "Python strings cannot be compared inside an if-statement without calling str().", "correct": false },
+          { "id": "c", "text": "Returning True and False explicitly is invalid when comparing strings.", "correct": false }
+        ],
+        "examRule": "Only use `is` for singletons like `None`, `True`, and `False`. Always use `==` to compare string or numeric values."
+      },
+      {
+        "id": "d4-py-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "DICT MUTATION",
+        "filename": "prune_scores.py",
+        "goal": "Delete every student with a score below 50 from the dictionary without crashing.",
+        "lines": [
+          "def prune_failing(scores):",
+          "    for name in scores:",
+          "        if scores[name] < 50:",
+          "            del scores[name]",
+          "    return scores",
+          "# RuntimeError: dictionary changed size during iteration!"
+        ],
+        "flawLine": 4,
+        "nudge": "Python dictionaries forbid adding or deleting keys while actively iterating over the live dict.",
+        "crowdTrapByLine": { "1": 3, "2": 38, "3": 10, "4": 45, "5": 4 },
+        "crowdTrapText": "38% of students tapped Line 2 first",
+        "choices": [
+          { "id": "a", "text": "Deleting a key while iterating directly over `scores` raises `RuntimeError: dictionary changed size during iteration`.", "correct": true },
+          { "id": "b", "text": "`del scores[name]` only deletes the value and leaves the key pointing to None.", "correct": false },
+          { "id": "c", "text": "Iterating `for name in scores` yields values instead of keys.", "correct": false }
+        ],
+        "examRule": "Never delete keys from a dict while iterating over it directly. Iterate over `list(scores.keys())` or rebuild with a dict comprehension."
+      },
+      {
+        "id": "d4-py-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "SHALLOW COPY TRAP",
+        "filename": "clone_config.py",
+        "goal": "Return an independent clone of a nested config dict so editing nested lists never mutates the original.",
+        "lines": [
+          "import copy",
+          "def clone_with_tag(config, tag):",
+          "    cloned = config.copy()",
+          "    cloned[\"tags\"].append(tag)",
+          "    return cloned",
+          "# Original config[\"tags\"] also gets mutated!"
+        ],
+        "flawLine": 3,
+        "nudge": "Does `dict.copy()` clone nested lists inside the dictionary, or only the top-level keys?",
+        "crowdTrapByLine": { "1": 2, "2": 5, "3": 54, "4": 33, "5": 6 },
+        "crowdTrapText": "33% of students tapped Line 4 first",
+        "patch": {
+          "tokens": ["copy.deepcopy(", "config)", "cloned = "],
+          "accept": [
+            "cloned = copy.deepcopy(config)"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "`config.copy()` makes a shallow copy, so `cloned[\"tags\"]` still references the original inner list; use `copy.deepcopy(config)`.", "correct": true },
+          { "id": "b", "text": "`cloned[\"tags\"].append(tag)` mutates the global `copy` module.", "correct": false },
+          { "id": "c", "text": "Python dictionaries cannot store lists as values.", "correct": false }
+        ],
+        "examRule": "`dict.copy()` and `list[:]` are shallow copies—nested mutable objects are still shared. Use `copy.deepcopy()` when cloning nested structures."
+      }
+    ],
+    "cpp": [
+      {
+        "id": "d4-cpp-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "CONTROL FLOW",
+        "filename": "tier_fee.cpp",
+        "goal": "Return a fee of 5 for tier 1, 10 for tier 2, and 20 for all other tiers.",
+        "lines": [
+          "int get_fee(int tier) {",
+          "    int fee = 20;",
+          "    switch (tier) {",
+          "        case 1: fee = 5;",
+          "        case 2: fee = 10; break;",
+          "    }",
+          "    return fee;",
+          "}",
+          "// get_fee(1) returns 10 instead of 5!"
+        ],
+        "flawLine": 4,
+        "nudge": "What happens after `fee = 5;` executes in a C++ switch statement without a `break`?",
+        "crowdTrapByLine": { "1": 3, "2": 9, "3": 6, "4": 68, "5": 11, "7": 3 },
+        "crowdTrapText": "11% of students tapped Line 5 first",
+        "patch": {
+          "tokens": ["case 1:", "fee = 5;", "break;"],
+          "accept": [
+            "case 1: fee = 5; break;",
+            "case 1: return 5;"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "Missing `break;` in `case 1` causes execution to fall through into `case 2`, overwriting `fee` with 10.", "correct": true },
+          { "id": "b", "text": "`switch` statements in C++ cannot modify variables declared outside the switch.", "correct": false },
+          { "id": "c", "text": "`case 1` requires curly braces around `fee = 5;` to compile.", "correct": false }
+        ],
+        "examRule": "C++ `switch` cases fall through by default. Always end each case with `break;` or `return` (or mark intentional fallthrough with `[[fallthrough]]`)."
+      },
+      {
+        "id": "d4-cpp-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "ITERATOR INVALIDATION",
+        "filename": "duplicate_zeros.cpp",
+        "goal": "Append a copy of every zero found in `nums` to the end of the vector safely.",
+        "lines": [
+          "void append_zeros(std::vector<int>& nums) {",
+          "    for (int x : nums) {",
+          "        if (x == 0) {",
+          "            nums.push_back(0);",
+          "        }",
+          "    }",
+          "}",
+          "// Crashes or loops wildly when vector reallocates!"
+        ],
+        "flawLine": 4,
+        "nudge": "What happens to the hidden iterators of a range-based for loop if `push_back` triggers a vector reallocation?",
+        "crowdTrapByLine": { "1": 5, "2": 36, "3": 6, "4": 49, "5": 4 },
+        "crowdTrapText": "36% of students tapped Line 2 first",
+        "choices": [
+          { "id": "a", "text": "Calling `nums.push_back(0)` inside a range-for loop can reallocate the vector, invalidating the loop's internal iterators (UB).", "correct": true },
+          { "id": "b", "text": "Range-based for loops cannot read elements from a non-const vector reference.", "correct": false },
+          { "id": "c", "text": "`push_back(0)` inserts at the front of `std::vector`, shifting `x`.", "correct": false }
+        ],
+        "examRule": "Never call `push_back` on a `std::vector` while iterating over it with iterators or a range-for loop—reallocation invalidates all iterators and references."
+      },
+      {
+        "id": "d4-cpp-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "DANGLING VIEW",
+        "filename": "full_name.cpp",
+        "goal": "Combine first and last names and print the result safely without undefined behavior.",
+        "lines": [
+          "void print_full(const std::string& first, const std::string& last) {",
+          "    std::string_view full = first + \" \" + last;",
+          "    std::cout << full << \"\\n\";",
+          "}",
+          "// Prints garbage or crashes under ASan!"
+        ],
+        "flawLine": 2,
+        "nudge": "Does `std::string_view` own memory, or does it merely point to a temporary `std::string` that dies at the semicolon?",
+        "crowdTrapByLine": { "1": 10, "2": 64, "3": 26 },
+        "crowdTrapText": "26% of students tapped Line 3 first",
+        "patch": {
+          "tokens": ["std::string ", "full = ", "first + \" \" + last;"],
+          "accept": [
+            "std::string full = first + \" \" + last;",
+            "auto full = first + \" \" + last;"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "`first + \" \" + last` creates a temporary `std::string` destroyed at the end of Line 2, leaving `std::string_view` dangling.", "correct": true },
+          { "id": "b", "text": "`std::cout` cannot print `std::string_view` objects directly.", "correct": false },
+          { "id": "c", "text": "Concatenating two `const std::string&` parameters with `+` is a compile error.", "correct": false }
+        ],
+        "examRule": "`std::string_view` is a non-owning pointer+length view. Never bind it to a temporary `std::string` expression—store it in an owning `std::string` instead."
+      }
+    ],
+    "java": [
+      {
+        "id": "d4-java-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "TYPE TRUNCATION",
+        "filename": "HitRate.java",
+        "goal": "Return the floating-point cache hit rate between 0.0 and 1.0.",
+        "lines": [
+          "public double hitRate(int hits, int total) {",
+          "  if (total == 0) return 0.0;",
+          "  return hits / total;",
+          "}",
+          "// hitRate(3, 4) returns 0.0 instead of 0.75!"
+        ],
+        "flawLine": 3,
+        "nudge": "Both `hits` and `total` are `int`—what type of division happens before Java widens the result to `double`?",
+        "crowdTrapByLine": { "1": 14, "2": 7, "3": 79 },
+        "crowdTrapText": "14% of students tapped Line 1 first",
+        "patch": {
+          "tokens": ["return ", "(double) ", "hits / total;"],
+          "accept": [
+            "return (double) hits / total;",
+            "return hits / (double) total;",
+            "return (double) hits / (double) total;"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "`hits / total` performs integer division and truncates 0.75 to 0 before converting to `double`; cast one operand with `(double)`.", "correct": true },
+          { "id": "b", "text": "Java methods returning `double` automatically round down to the nearest integer.", "correct": false },
+          { "id": "c", "text": "Returning `0.0` on Line 2 forces the method to return 0.0 for all inputs.", "correct": false }
+        ],
+        "examRule": "In Java, `int / int` always truncates to an `int` before assignment or return. Cast at least one operand: `(double) hits / total`."
+      },
+      {
+        "id": "d4-java-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "COLLECTIONS TRAP",
+        "filename": "TagList.java",
+        "goal": "Create a mutable list starting with \"A\" and \"B\", then append \"C\" and return it.",
+        "lines": [
+          "public List<String> buildTags() {",
+          "  List<String> tags = Arrays.asList(\"A\", \"B\");",
+          "  tags.add(\"C\");",
+          "  return tags;",
+          "}",
+          "// Throws UnsupportedOperationException at runtime!"
+        ],
+        "flawLine": 2,
+        "nudge": "Is the `List` returned by `Arrays.asList(...)` resizable, or is it a fixed-size wrapper over an array?",
+        "crowdTrapByLine": { "1": 4, "2": 46, "3": 44, "4": 6 },
+        "crowdTrapText": "44% of students tapped Line 3 first",
+        "patch": {
+          "tokens": ["new ArrayList<>(", "Arrays.asList(\"A\", \"B\"))", "List<String> tags = "],
+          "accept": [
+            "List<String> tags = new ArrayList<>(Arrays.asList(\"A\", \"B\"));",
+            "List<String> tags = new ArrayList<>(List.of(\"A\", \"B\"));"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "`Arrays.asList()` returns a fixed-size list backed by an array, so `add()` throws `UnsupportedOperationException`; wrap it in `new ArrayList<>(...)`.", "correct": true },
+          { "id": "b", "text": "`List<String>` is an interface and never supports the `.add()` method.", "correct": false },
+          { "id": "c", "text": "`Arrays.asList()` only accepts `Integer` elements, not `String`.", "correct": false }
+        ],
+        "examRule": "`Arrays.asList()` returns a fixed-size list (and `List.of()` is completely immutable). Wrap it in `new ArrayList<>(...)` whenever you need to add or remove elements."
+      },
+      {
+        "id": "d4-java-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "SILENT TLE TRAP",
+        "filename": "JoinWords.java",
+        "goal": "Concatenate 100,000 log tokens into a single String in O(N) time without timing out.",
+        "lines": [
+          "public String joinAll(String[] tokens) {",
+          "  String out = \"\";",
+          "  for (String t : tokens) {",
+          "    out += t;",
+          "  }",
+          "  return out;",
+          "}",
+          "// Times out (TLE) on 100,000 tokens!"
+        ],
+        "flawLine": 4,
+        "nudge": "Since Java Strings are immutable, what happens to memory and time complexity on every `out += t` iteration?",
+        "crowdTrapByLine": { "1": 4, "2": 22, "3": 14, "4": 56, "5": 4 },
+        "crowdTrapText": "22% of students tapped Line 2 first",
+        "choices": [
+          { "id": "a", "text": "`out += t` allocates and copies the entire growing String on every iteration, causing O(N²) time; use `StringBuilder`.", "correct": true },
+          { "id": "b", "text": "The enhanced for-each loop copies the `tokens` array on every iteration.", "correct": false },
+          { "id": "c", "text": "Initializing `out = \"\"` prevents `+` from concatenating strings.", "correct": false }
+        ],
+        "examRule": "Repeated `String +=` inside a loop is O(N²) because Strings are immutable. Always use `StringBuilder` (or `String.join`) for loop concatenation."
+      }
+    ],
+    "sql": [
+      {
+        "id": "d4-sql-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "LEFT JOIN COUNT",
+        "filename": "user_order_counts.sql",
+        "goal": "Return each user's ID and their exact number of orders (showing 0 for users with no orders).",
+        "lines": [
+          "SELECT u.id, COUNT(*) AS order_count",
+          "FROM users u",
+          "LEFT JOIN orders o",
+          "  ON u.id = o.user_id",
+          "GROUP BY u.id;",
+          "-- Users with 0 orders show order_count = 1!"
+        ],
+        "flawLine": 1,
+        "nudge": "In a LEFT JOIN, a user with zero orders still produces 1 NULL-padded row. What does `COUNT(*)` count vs `COUNT(o.id)`?",
+        "crowdTrapByLine": { "1": 52, "2": 4, "3": 29, "4": 9, "5": 6 },
+        "crowdTrapText": "29% of students tapped Line 3 first",
+        "patch": {
+          "tokens": ["SELECT u.id, ", "COUNT(o.id)", "AS order_count"],
+          "accept": [
+            "re:/^select\\s+u\\.id\\s*,\\s*count\\(\\s*o\\.id\\s*\\)\\s+as\\s+order_count$/i",
+            "re:/^select\\s+u\\.id\\s*,\\s*count\\(\\s*o\\.user_id\\s*\\)\\s+as\\s+order_count$/i"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "`COUNT(*)` counts the NULL-padded unmatched row as 1; use `COUNT(o.id)` so unmatched users count as 0.", "correct": true },
+          { "id": "b", "text": "`LEFT JOIN` automatically duplicates users who have zero orders.", "correct": false },
+          { "id": "c", "text": "`GROUP BY u.id` excludes users with zero orders unless `HAVING` is added.", "correct": false }
+        ],
+        "examRule": "After a `LEFT JOIN`, never use `COUNT(*)` to count child rows—it counts NULL-padded rows as 1. Always count a non-null child column like `COUNT(o.id)`."
+      },
+      {
+        "id": "d4-sql-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "TIMESTAMP RANGE",
+        "filename": "jan_signups.sql",
+        "goal": "Return all signups occurring at any time during January 2026 (`created_at` is a TIMESTAMP).",
+        "lines": [
+          "SELECT id, created_at",
+          "FROM users",
+          "WHERE created_at BETWEEN '2026-01-01' AND '2026-01-31';",
+          "-- Misses every signup on Jan 31 after 00:00:00!"
+        ],
+        "flawLine": 3,
+        "nudge": "When a date string `'2026-01-31'` is cast to a TIMESTAMP, what time of day does it default to?",
+        "crowdTrapByLine": { "1": 6, "2": 4, "3": 90 },
+        "crowdTrapText": "6% of students tapped Line 1 first",
+        "choices": [
+          { "id": "a", "text": "`'2026-01-31'` casts to `2026-01-31 00:00:00`, dropping all timestamps later on Jan 31; use `>= '2026-01-01' AND < '2026-02-01'`.", "correct": true },
+          { "id": "b", "text": "`BETWEEN` in SQL is exclusive of both endpoints.", "correct": false },
+          { "id": "c", "text": "String dates cannot be compared to TIMESTAMP columns in SQL.", "correct": false }
+        ],
+        "examRule": "Never use `BETWEEN` with date literals on TIMESTAMP columns—it cuts off the final day at midnight. Use half-open ranges: `>= '2026-01-01' AND < '2026-02-01'`."
+      },
+      {
+        "id": "d4-sql-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "NULL COUNTING",
+        "filename": "total_accounts.sql",
+        "goal": "Return the total number of registered accounts in `users`, including accounts that haven't verified an email yet.",
+        "lines": [
+          "SELECT COUNT(email) AS total_users",
+          "FROM users;",
+          "-- Unverified users with email = NULL are missing from the count!"
+        ],
+        "flawLine": 1,
+        "nudge": "How does `COUNT(column_name)` treat rows where `column_name` is NULL?",
+        "crowdTrapByLine": { "1": 84, "2": 16 },
+        "crowdTrapText": "16% of students tapped Line 2 first",
+        "patch": {
+          "tokens": ["SELECT ", "COUNT(*)", "AS total_users"],
+          "accept": [
+            "re:/^select\\s+count\\(\\*\\)\\s+as\\s+total_users$/i",
+            "re:/^select\\s+count\\(1\\)\\s+as\\s+total_users$/i"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "`COUNT(email)` skips every row where `email` is NULL; use `COUNT(*)` to count all rows.", "correct": true },
+          { "id": "b", "text": "`COUNT(email)` only counts distinct email addresses.", "correct": false },
+          { "id": "c", "text": "`AS total_users` requires a `GROUP BY` clause.", "correct": false }
+        ],
+        "examRule": "`COUNT(*)` counts every row, whereas `COUNT(col)` silently ignores NULL values in `col`."
+      }
+    ]
+  },
+  {
+    "python": [
+      {
+        "id": "d5-py-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "TRUTHINESS TRAP",
+        "filename": "default_timeout.py",
+        "goal": "Use default timeout 30 only when `timeout` is `None`, while still allowing `timeout=0` (no wait).",
+        "lines": [
+          "def get_timeout(timeout):",
+          "    if not timeout:",
+          "        return 30",
+          "    return timeout",
+          "# get_timeout(0) returns 30 instead of 0!"
+        ],
+        "flawLine": 2,
+        "nudge": "In Python, `0`, `\"\"`, and `[]` are all falsy. How do you check specifically for `None`?",
+        "crowdTrapByLine": { "1": 4, "2": 79, "3": 10, "4": 7 },
+        "crowdTrapText": "10% of students tapped Line 3 first",
+        "patch": {
+          "tokens": ["if ", "timeout is None:"],
+          "accept": [
+            "if timeout is None:"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "`not timeout` treats `0` as falsy and replaces it with 30; check `if timeout is None:` explicitly.", "correct": true },
+          { "id": "b", "text": "`return 30` overrides `timeout` even when `timeout` is 10.", "correct": false },
+          { "id": "c", "text": "Python functions cannot accept `0` as an argument.", "correct": false }
+        ],
+        "examRule": "Never use `if not x:` when `0`, `False`, or `\"\"` are valid inputs. Check `if x is None:` explicitly."
+      },
+      {
+        "id": "d5-py-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "SILENT TLE TRAP",
+        "filename": "has_dups.py",
+        "goal": "Return True if a 200,000-element list contains any duplicate values, in O(N) time.",
+        "lines": [
+          "def has_duplicate(nums):",
+          "    seen = []",
+          "    for x in nums:",
+          "        if x in seen:",
+          "            return True",
+          "        seen.append(x)",
+          "    return False"
+        ],
+        "flawLine": 2,
+        "nudge": "What is the time complexity of `x in seen` when `seen` is a Python `list` vs a `set`?",
+        "crowdTrapByLine": { "1": 3, "2": 48, "3": 6, "4": 34, "5": 3, "6": 6 },
+        "crowdTrapText": "34% of students tapped Line 4 first",
+        "choices": [
+          { "id": "a", "text": "Membership lookup `x in list` is O(N), making the loop O(N²) TLE; use `seen = set()` and `seen.add(x)` for O(1) lookups.", "correct": true },
+          { "id": "b", "text": "`seen.append(x)` sorts the list on every insertion.", "correct": false },
+          { "id": "c", "text": "`if x in seen` only checks the first and last element of a list.", "correct": false }
+        ],
+        "examRule": "In Python OAs, `x in list` is O(N) linear scan, whereas `x in set` is O(1) average hash lookup. Use a `set` for membership tracking."
+      },
+      {
+        "id": "d5-py-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "QUANT NUMERICS",
+        "filename": "clean_nan.py",
+        "goal": "Filter out IEEE 754 `NaN` values from a list of sensor readings.",
+        "lines": [
+          "import math",
+          "def drop_nans(vals):",
+          "    return [v for v in vals if v != float(\"nan\")]",
+          "# float(\"nan\") values are STILL in the returned list!"
+        ],
+        "flawLine": 3,
+        "nudge": "Under IEEE 754 rules, what does `NaN != NaN` evaluate to?",
+        "crowdTrapByLine": { "1": 4, "2": 6, "3": 90 },
+        "crowdTrapText": "6% of students tapped Line 2 first",
+        "patch": {
+          "tokens": ["return [v for v in vals ", "if not math.isnan(v)]"],
+          "accept": [
+            "return [v for v in vals if not math.isnan(v)]"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "In IEEE 754, `NaN != NaN` is always `True`, so `v != float(\"nan\")` keeps every NaN; use `not math.isnan(v)`.", "correct": true },
+          { "id": "b", "text": "`float(\"nan\")` creates a string instead of a floating-point number.", "correct": false },
+          { "id": "c", "text": "List comprehensions cannot filter floating-point numbers.", "correct": false }
+        ],
+        "examRule": "`NaN` is never equal to anything—including itself (`NaN == NaN` is False, `NaN != NaN` is True). Always detect it with `math.isnan(v)`."
+      }
+    ],
+    "cpp": [
+      {
+        "id": "d5-cpp-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "OPERATOR TRAP",
+        "filename": "check_http.cpp",
+        "goal": "Return true only when `status` equals 200.",
+        "lines": [
+          "bool is_success(int status) {",
+          "    if (status = 200) {",
+          "        return true;",
+          "    }",
+          "    return false;",
+          "}",
+          "// is_success(404) returns true!"
+        ],
+        "flawLine": 2,
+        "nudge": "Look closely at the operator inside `if (status = 200)`.",
+        "crowdTrapByLine": { "1": 4, "2": 85, "3": 6, "5": 5 },
+        "crowdTrapText": "6% of students tapped Line 3 first",
+        "patch": {
+          "tokens": ["if (", "status == 200) {"],
+          "accept": [
+            "if (status == 200) {",
+            "if (200 == status) {"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "Single `=` assigns 200 to `status` and evaluates to 200 (truthy); use `==` for comparison.", "correct": true },
+          { "id": "b", "text": "200 overflows a signed `int` in C++.", "correct": false },
+          { "id": "c", "text": "`status` must be declared `const` before comparing to 200.", "correct": false }
+        ],
+        "examRule": "In C++, `if (a = b)` is legal assignment, not comparison. Compile with `-Wall` and always double-check `==`."
+      },
+      {
+        "id": "d5-cpp-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "STL SORT UB",
+        "filename": "sort_desc.cpp",
+        "goal": "Sort a vector of integers in descending order without causing undefined behavior on equal elements.",
+        "lines": [
+          "void sort_desc(std::vector<int>& v) {",
+          "    std::sort(v.begin(), v.end(), [](int a, int b) {",
+          "        return a >= b;",
+          "    });",
+          "}",
+          "// Segfaults on large inputs with many duplicate values!"
+        ],
+        "flawLine": 3,
+        "nudge": "`std::sort` requires a strict weak ordering: what must `comp(x, x)` return for equal elements?",
+        "crowdTrapByLine": { "1": 5, "2": 24, "3": 67, "4": 4 },
+        "crowdTrapText": "24% of students tapped Line 2 first",
+        "patch": {
+          "tokens": ["return ", "a > b;"],
+          "accept": [
+            "return a > b;"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "`a >= b` returns `true` when `a == b`, violating strict weak ordering and causing out-of-bounds UB in `std::sort`; use `a > b`.", "correct": true },
+          { "id": "b", "text": "Lambdas cannot be passed as comparators to `std::sort`.", "correct": false },
+          { "id": "c", "text": "`v.end()` points to the last valid element, causing an off-by-one error.", "correct": false }
+        ],
+        "examRule": "C++ `std::sort` comparators MUST satisfy strict weak ordering (`comp(x, x)` must be `false`). Never use `<=` or `>=` in a comparator—use `<` or `>`."
+      },
+      {
+        "id": "d5-cpp-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "SMART POINTER LEAK",
+        "filename": "node_cycle.cpp",
+        "goal": "Link two heap-allocated nodes together without causing a permanent memory leak when they go out of scope.",
+        "lines": [
+          "struct Node {",
+          "    std::shared_ptr<Node> next;",
+          "    std::shared_ptr<Node> prev;",
+          "};",
+          "// a->next = b; b->prev = a; never frees either Node!"
+        ],
+        "flawLine": 3,
+        "nudge": "If `a` holds a `shared_ptr` to `b` and `b` holds a `shared_ptr` to `a`, can their reference counts ever reach 0?",
+        "crowdTrapByLine": { "1": 6, "2": 28, "3": 66 },
+        "crowdTrapText": "28% of students tapped Line 2 first",
+        "patch": {
+          "tokens": ["std::weak_ptr<Node>", "prev;"],
+          "accept": [
+            "std::weak_ptr<Node> prev;"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "Two mutual `std::shared_ptr` links create a reference cycle whose count never drops to 0; make the back-pointer `std::weak_ptr<Node>`.", "correct": true },
+          { "id": "b", "text": "`struct` members default to `private` and cannot be destroyed.", "correct": false },
+          { "id": "c", "text": "`std::shared_ptr` does not free memory automatically in C++.", "correct": false }
+        ],
+        "examRule": "Mutual `std::shared_ptr` references create reference cycles that leak memory forever. Break cycles using `std::weak_ptr` for non-owning back-links."
+      }
+    ],
+    "java": [
+      {
+        "id": "d5-java-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "REGEX TRAP",
+        "filename": "ParseIP.java",
+        "goal": "Split an IPv4 address like \"192.168.0.1\" into its 4 numeric parts.",
+        "lines": [
+          "public String[] splitIp(String ip) {",
+          "  return ip.split(\".\");",
+          "}",
+          "// Returns an empty array [] instead of [\"192\", \"168\", \"0\", \"1\"]!"
+        ],
+        "flawLine": 2,
+        "nudge": "`String.split()` takes a Regular Expression, not a literal delimiter. What does `.` match in regex?",
+        "crowdTrapByLine": { "1": 6, "2": 94 },
+        "crowdTrapText": "6% of students tapped Line 1 first",
+        "patch": {
+          "tokens": ["return ", "ip.split(\"\\\\.\");"],
+          "accept": [
+            "return ip.split(\"\\\\.\");",
+            "return ip.split(\"[.]\");"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "`String.split()` interprets `.` as a regex wildcard matching every character; escape it as `ip.split(\"\\\\.\")`.", "correct": true },
+          { "id": "b", "text": "`String.split()` returns a `List<String>` rather than `String[]`.", "correct": false },
+          { "id": "c", "text": "Periods cannot appear inside Java string literals.", "correct": false }
+        ],
+        "examRule": "Java's `String.split(regex)` takes a regular expression. Escape regex metacharacters like `.` or `|` with `\"\\\\.\"` or `Pattern.quote(\".\")`."
+      },
+      {
+        "id": "d5-java-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "QUANT NUMERICS",
+        "filename": "ExactPrice.java",
+        "goal": "Create a `BigDecimal` representing the exact decimal value 0.1 without binary floating-point noise.",
+        "lines": [
+          "public BigDecimal tenCents() {",
+          "  return new BigDecimal(0.1);",
+          "}",
+          "// Produces 0.1000000000000000055511151231257827...!"
+        ],
+        "flawLine": 2,
+        "nudge": "What is the exact value of the `double` literal `0.1` before it even reaches the `BigDecimal` constructor?",
+        "crowdTrapByLine": { "1": 8, "2": 92 },
+        "crowdTrapText": "8% of students tapped Line 1 first",
+        "patch": {
+          "tokens": ["return ", "new BigDecimal(\"0.1\");", "BigDecimal.valueOf(0.1);"],
+          "accept": [
+            "return new BigDecimal(\"0.1\");",
+            "return BigDecimal.valueOf(0.1);"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "`new BigDecimal(double)` captures the inexact binary float representation; use `new BigDecimal(\"0.1\")` or `BigDecimal.valueOf(0.1)`.", "correct": true },
+          { "id": "b", "text": "`BigDecimal` only supports integer values, not decimals.", "correct": false },
+          { "id": "c", "text": "`BigDecimal` rounds all numbers up to 1.0 by default.", "correct": false }
+        ],
+        "examRule": "Never pass a `double` to `new BigDecimal(double)`—it preserves binary float inaccuracy. Use `new BigDecimal(\"0.1\")` or `BigDecimal.valueOf(0.1)`."
+      },
+      {
+        "id": "d5-java-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "OA EDGE CASE",
+        "filename": "MaxVal.java",
+        "goal": "Return the largest double in a non-empty array that may contain only negative numbers.",
+        "lines": [
+          "public double maxDouble(double[] nums) {",
+          "  double best = Double.MIN_VALUE;",
+          "  for (double x : nums) {",
+          "    if (x > best) best = x;",
+          "  }",
+          "  return best;",
+          "}",
+          "// maxDouble([-5.0, -2.0]) returns 4.9E-324 instead of -2.0!"
+        ],
+        "flawLine": 2,
+        "nudge": "Unlike `Integer.MIN_VALUE`, is `Double.MIN_VALUE` negative or positive in Java?",
+        "crowdTrapByLine": { "1": 4, "2": 62, "3": 6, "4": 24, "6": 4 },
+        "crowdTrapText": "24% of students tapped Line 4 first",
+        "patch": {
+          "tokens": ["double best = ", "Double.NEGATIVE_INFINITY;", "-Double.MAX_VALUE;"],
+          "accept": [
+            "double best = Double.NEGATIVE_INFINITY;",
+            "double best = -Double.MAX_VALUE;",
+            "double best = nums[0];"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "`Double.MIN_VALUE` is the smallest POSITIVE double (4.9e-324), not negative; initialize with `Double.NEGATIVE_INFINITY` or `-Double.MAX_VALUE`.", "correct": true },
+          { "id": "b", "text": "Comparing negative doubles with `>` is reversed in Java.", "correct": false },
+          { "id": "c", "text": "`Double.MIN_VALUE` is equal to `NaN`.", "correct": false }
+        ],
+        "examRule": "Classic Java OA trap: `Double.MIN_VALUE` is POSITIVE (`4.9e-324`). For the lowest possible double, use `Double.NEGATIVE_INFINITY` or `-Double.MAX_VALUE`."
+      }
+    ],
+    "sql": [
+      {
+        "id": "d5-sql-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "NULL FILTERING",
+        "filename": "active_orders.sql",
+        "goal": "Return all orders whose status is NOT 'CANCELLED', including newly created orders where status is still NULL.",
+        "lines": [
+          "SELECT id, status",
+          "FROM orders",
+          "WHERE status != 'CANCELLED';",
+          "-- Orders with status = NULL are silently dropped!"
+        ],
+        "flawLine": 3,
+        "nudge": "In SQL three-valued logic, does `NULL != 'CANCELLED'` evaluate to TRUE or UNKNOWN?",
+        "crowdTrapByLine": { "1": 6, "2": 5, "3": 89 },
+        "crowdTrapText": "6% of students tapped Line 1 first",
+        "choices": [
+          { "id": "a", "text": "`NULL != 'CANCELLED'` evaluates to UNKNOWN, dropping NULL rows; use `WHERE status IS NULL OR status != 'CANCELLED'` (or `IS DISTINCT FROM`).", "correct": true },
+          { "id": "b", "text": "`!=` is invalid SQL syntax and always returns 0 rows.", "correct": false },
+          { "id": "c", "text": "String comparisons in `WHERE` are case-insensitive only when using `<>`.", "correct": false }
+        ],
+        "examRule": "Inequality (`!=` or `<>`) never matches `NULL` in SQL. Always handle nullable columns with `IS NULL OR col != ...` or `IS DISTINCT FROM`."
+      },
+      {
+        "id": "d5-sql-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "INDEX PERFORMANCE",
+        "filename": "orders_2026.sql",
+        "goal": "Query all 2026 orders while allowing the database to use the B-Tree index on `created_at`.",
+        "lines": [
+          "SELECT id, total",
+          "FROM orders",
+          "WHERE YEAR(created_at) = 2026;",
+          "-- Triggers a full table scan on 50M rows despite index on created_at!"
+        ],
+        "flawLine": 3,
+        "nudge": "What happens to a B-Tree index when you wrap the indexed column inside a function like `YEAR(...)`?",
+        "crowdTrapByLine": { "1": 5, "2": 8, "3": 87 },
+        "crowdTrapText": "8% of students tapped Line 2 first",
+        "choices": [
+          { "id": "a", "text": "Wrapping `created_at` in `YEAR()` makes the predicate non-SARGable and disables the B-Tree index; use a range `>= '2026-01-01' AND < '2027-01-01'`.", "correct": true },
+          { "id": "b", "text": "`YEAR(created_at)` returns a string `'2026'`, which cannot equal integer `2026`.", "correct": false },
+          { "id": "c", "text": "B-Tree indexes cannot be used on `SELECT` queries without `ORDER BY`.", "correct": false }
+        ],
+        "examRule": "Keep indexed columns bare on one side of the comparison (SARGable). Wrapping a column in `YEAR(col)` or `LOWER(col)` prevents standard B-Tree index seeks."
+      },
+      {
+        "id": "d5-sql-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "WINDOW FRAME TRAP",
+        "filename": "running_pnl.sql",
+        "goal": "Compute a strict row-by-row running sum of PnL, even when two trades share the exact same `trade_date`.",
+        "lines": [
+          "SELECT id, trade_date, pnl,",
+          "       SUM(pnl) OVER (ORDER BY trade_date) AS running_pnl",
+          "FROM trades;",
+          "-- Same-day trades jump to the same combined total!"
+        ],
+        "flawLine": 2,
+        "nudge": "When you write `OVER (ORDER BY col)` without specifying a frame, does SQL default to `ROWS` or `RANGE`?",
+        "crowdTrapByLine": { "1": 8, "2": 82, "3": 10 },
+        "crowdTrapText": "10% of students tapped Line 3 first",
+        "choices": [
+          { "id": "a", "text": "`OVER (ORDER BY trade_date)` defaults to `RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`, grouping peer ties together; add `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`.", "correct": true },
+          { "id": "b", "text": "`SUM()` cannot be used with `OVER (ORDER BY ...)` without `PARTITION BY`.", "correct": false },
+          { "id": "c", "text": "`ORDER BY trade_date` sorts the entire table in descending order by default.", "correct": false }
+        ],
+        "examRule": "In SQL window functions, `ORDER BY` defaults to a `RANGE` frame (which includes all peer ties). Specify `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` for strict row-by-row running totals."
+      }
+    ]
+  },
+  {
+    "python": [
+      {
+        "id": "d6-py-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "SYNTAX GOTCHA",
+        "filename": "single_tuple.py",
+        "goal": "Wrap `item` inside a 1-element tuple and return it.",
+        "lines": [
+          "def wrap_tuple(item):",
+          "    return (item)",
+          "# type(wrap_tuple(42)) is int instead of tuple!"
+        ],
+        "flawLine": 2,
+        "nudge": "In Python, parentheses alone just group an expression. What character actually defines a 1-element tuple?",
+        "crowdTrapByLine": { "1": 8, "2": 92 },
+        "crowdTrapText": "8% of students tapped Line 1 first",
+        "patch": {
+          "tokens": ["return ", "(item,)"],
+          "accept": [
+            "return (item,)",
+            "return item,"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "`(item)` is just a parenthesized value; a 1-element tuple requires a trailing comma: `(item,)`.", "correct": true },
+          { "id": "b", "text": "Python tuples must contain at least 2 elements.", "correct": false },
+          { "id": "c", "text": "Returning a tuple requires calling `tuple(item)` even for integers.", "correct": false }
+        ],
+        "examRule": "In Python, the comma—not the parentheses—creates a tuple. Always write `(x,)` for a single-element tuple."
+      },
+      {
+        "id": "d6-py-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "STRING METHOD TRAP",
+        "filename": "strip_ext.py",
+        "goal": "Remove only the trailing \".py\" extension from a Python filename.",
+        "lines": [
+          "def base_name(filename):",
+          "    return filename.strip(\".py\")",
+          "# base_name(\"copy.py\") returns \"co\" instead of \"copy\"!"
+        ],
+        "flawLine": 2,
+        "nudge": "Does `str.strip(chars)` remove an exact substring, or any individual character in the set `'.', 'p', 'y'`?",
+        "crowdTrapByLine": { "1": 7, "2": 93 },
+        "crowdTrapText": "7% of students tapped Line 1 first",
+        "patch": {
+          "tokens": ["return ", "filename.removesuffix(\".py\")"],
+          "accept": [
+            "return filename.removesuffix(\".py\")",
+            "return filename.removesuffix('.py')"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "`strip(\".py\")` strips ANY leading or trailing '.', 'p', or 'y' characters; use `filename.removesuffix(\".py\")`.", "correct": true },
+          { "id": "b", "text": "`strip()` only removes whitespace and ignores its argument.", "correct": false },
+          { "id": "c", "text": "`strip(\".py\")` removes `\".py\"` from the middle of the string too.", "correct": false }
+        ],
+        "examRule": "`str.strip(chars)` treats its argument as a SET of characters to strip from both ends. Use `removeprefix()` / `removesuffix()` (Python 3.9+) for exact substrings."
+      },
+      {
+        "id": "d6-py-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "ASYNC CONCURRENCY",
+        "filename": "poll_worker.py",
+        "goal": "Pause an async worker coroutine for 1 second without freezing the entire asyncio event loop.",
+        "lines": [
+          "import asyncio, time",
+          "async def poll_once():",
+          "    time.sleep(1)",
+          "    return \"READY\"",
+          "# Blocks all other concurrent coroutines for 1 full second!"
+        ],
+        "flawLine": 3,
+        "nudge": "Does `time.sleep(1)` yield control back to the `asyncio` event loop, or block the OS thread?",
+        "crowdTrapByLine": { "1": 4, "2": 14, "3": 78, "4": 4 },
+        "crowdTrapText": "14% of students tapped Line 2 first",
+        "patch": {
+          "tokens": ["await ", "asyncio.sleep(1)"],
+          "accept": [
+            "await asyncio.sleep(1)"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "`time.sleep(1)` blocks the entire single-threaded event loop; use `await asyncio.sleep(1)` to yield control.", "correct": true },
+          { "id": "b", "text": "`async def` functions cannot return string values.", "correct": false },
+          { "id": "c", "text": "Importing `asyncio` and `time` on the same line disables async scheduling.", "correct": false }
+        ],
+        "examRule": "Never call blocking I/O or `time.sleep()` inside an `async def` coroutine—it freezes the entire event loop. Use `await asyncio.sleep()`."
+      }
+    ],
+    "cpp": [
+      {
+        "id": "d6-cpp-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "ARRAY DECAY",
+        "filename": "arr_len.cpp",
+        "goal": "Return the number of elements in the passed C-style integer array.",
+        "lines": [
+          "std::size_t count_elems(int arr[]) {",
+          "    return sizeof(arr) / sizeof(arr[0]);",
+          "}",
+          "// Always returns 2 on 64-bit systems regardless of array length!"
+        ],
+        "flawLine": 2,
+        "nudge": "When `int arr[]` is a function parameter in C++, what type does `arr` actually decay to?",
+        "crowdTrapByLine": { "1": 28, "2": 72 },
+        "crowdTrapText": "28% of students tapped Line 1 first",
+        "choices": [
+          { "id": "a", "text": "Array parameters decay to `int*`, so `sizeof(arr)` returns the pointer size (8 bytes) instead of the array size; use `std::span` or pass length.", "correct": true },
+          { "id": "b", "text": "`sizeof(arr[0])` returns 0 because `arr` is uninitialized.", "correct": false },
+          { "id": "c", "text": "`sizeof` only works on `std::vector`, not raw arrays.", "correct": false }
+        ],
+        "examRule": "C-style array parameters always decay to pointers (`int*`). Never use `sizeof(arr)` inside a function—pass `std::span<const int>` or `const std::vector<int>&`."
+      },
+      {
+        "id": "d6-cpp-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "STL HEAP TRAP",
+        "filename": "k_smallest.cpp",
+        "goal": "Pop and return the SMALLEST integer from a priority queue of incoming values.",
+        "lines": [
+          "int get_smallest(const std::vector<int>& nums) {",
+          "    std::priority_queue<int> pq(nums.begin(), nums.end());",
+          "    return pq.top();",
+          "}",
+          "// get_smallest({3, 1, 9}) returns 9 instead of 1!"
+        ],
+        "flawLine": 2,
+        "nudge": "Unlike Python's `heapq` (min-heap), is C++'s `std::priority_queue<int>` a min-heap or a max-heap by default?",
+        "crowdTrapByLine": { "1": 4, "2": 74, "3": 22 },
+        "crowdTrapText": "22% of students tapped Line 3 first",
+        "choices": [
+          { "id": "a", "text": "`std::priority_queue<int>` is a MAX-heap by default (`std::less`); use `std::priority_queue<int, std::vector<int>, std::greater<int>>` for a min-heap.", "correct": true },
+          { "id": "b", "text": "`pq.top()` returns the last element inserted rather than the smallest.", "correct": false },
+          { "id": "c", "text": "Constructing a `priority_queue` from iterators skips sorting.", "correct": false }
+        ],
+        "examRule": "C++ `std::priority_queue` is a MAX-heap by default (opposite of Python's `heapq`). Specify `std::greater<int>` as the 3rd template argument for a min-heap."
+      },
+      {
+        "id": "d6-cpp-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "DANGLING REFERENCE",
+        "filename": "first_elem.cpp",
+        "goal": "Keep a reference to the first element of `v`, append 99, and return the first element safely.",
+        "lines": [
+          "int append_and_get_first(std::vector<int>& v) {",
+          "    int& first = v[0];",
+          "    v.push_back(99);",
+          "    return first;",
+          "}",
+          "// Heap-use-after-free under ASan when v reallocates!"
+        ],
+        "flawLine": 3,
+        "nudge": "If `v.push_back(99)` exceeds `v.capacity()`, where does the old buffer that `first` references go?",
+        "crowdTrapByLine": { "1": 4, "2": 32, "3": 46, "4": 18 },
+        "crowdTrapText": "32% of students tapped Line 2 first",
+        "choices": [
+          { "id": "a", "text": "`v.push_back(99)` can reallocate `v`'s internal buffer, freeing the old memory and leaving `int& first` as a dangling reference (UB).", "correct": true },
+          { "id": "b", "text": "`v[0]` returns a temporary rvalue that cannot bind to `int&`.", "correct": false },
+          { "id": "c", "text": "`push_back(99)` overwrites index 0 when the vector is full.", "correct": false }
+        ],
+        "examRule": "Any `std::vector` operation that may reallocate (`push_back`, `emplace_back`, `resize`) invalidates all existing pointers, references, and iterators into that vector."
+      }
+    ],
+    "java": [
+      {
+        "id": "d6-java-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "OVERFLOW TRAP",
+        "filename": "SafeAbs.java",
+        "goal": "Return a non-negative bucket index in `[0, buckets - 1]` for any possible 32-bit `hashCode()`.",
+        "lines": [
+          "public int bucketIndex(int hash, int buckets) {",
+          "  return Math.abs(hash) % buckets;",
+          "}",
+          "// Throws ArrayIndexOutOfBoundsException when hash == Integer.MIN_VALUE!"
+        ],
+        "flawLine": 2,
+        "nudge": "In two's complement 32-bit arithmetic, what does `Math.abs(Integer.MIN_VALUE)` return?",
+        "crowdTrapByLine": { "1": 8, "2": 92 },
+        "crowdTrapText": "8% of students tapped Line 1 first",
+        "choices": [
+          { "id": "a", "text": "`Math.abs(Integer.MIN_VALUE)` overflows and returns `Integer.MIN_VALUE` (negative!); use `Math.floorMod(hash, buckets)` or `(hash & 0x7fffffff) % buckets`.", "correct": true },
+          { "id": "b", "text": "The `%` operator always returns a negative number when `buckets` is even.", "correct": false },
+          { "id": "c", "text": "`Math.abs()` returns a `double` that cannot be used with `%`.", "correct": false }
+        ],
+        "examRule": "`Math.abs(Integer.MIN_VALUE)` is still negative (`-2147483648`). For non-negative hash bucketing, use `Math.floorMod(hash, buckets)` or `(hash & 0x7fffffff) % buckets`."
+      },
+      {
+        "id": "d6-java-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "HASHMAP TRAP",
+        "filename": "MutableKey.java",
+        "goal": "Store a user record under a `List<String>` key, then reliably look it up again.",
+        "lines": [
+          "Map<List<String>, Integer> cache = new HashMap<>();",
+          "List<String> key = new ArrayList<>(List.of(\"A\"));",
+          "cache.put(key, 100);",
+          "key.add(\"B\");",
+          "Integer val = cache.get(key);",
+          "// val is null even though key is in the map!"
+        ],
+        "flawLine": 4,
+        "nudge": "When `key.add(\"B\")` mutates the list, what happens to `key.hashCode()` compared to the bucket where it was stored?",
+        "crowdTrapByLine": { "1": 5, "2": 12, "3": 8, "4": 54, "5": 21 },
+        "crowdTrapText": "21% of students tapped Line 5 first",
+        "choices": [
+          { "id": "a", "text": "Mutating a key after `put()` changes its `hashCode()`, so `get(key)` searches the wrong bucket and returns `null`.", "correct": true },
+          { "id": "b", "text": "`HashMap` forbids `List<String>` as a key type at runtime.", "correct": false },
+          { "id": "c", "text": "`cache.put(key, 100)` deletes `key` after reading its value.", "correct": false }
+        ],
+        "examRule": "Never mutate an object's `hashCode()`-bearing fields after inserting it as a `HashMap` key or `HashSet` element. Use immutable keys like `List.of(...)` or `record`s."
+      },
+      {
+        "id": "d6-java-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "STREAMS API",
+        "filename": "StreamStats.java",
+        "goal": "Count matching items in a `Stream<String>` and also grab the first matching item.",
+        "lines": [
+          "public void inspect(List<String> items) {",
+          "  Stream<String> s = items.stream().filter(x -> !x.isEmpty());",
+          "  long count = s.count();",
+          "  Optional<String> first = s.findFirst();",
+          "}",
+          "// Throws IllegalStateException: stream has already been operated upon!"
+        ],
+        "flawLine": 4,
+        "nudge": "Can a Java `Stream` be consumed by more than one terminal operation (`count()`, `findFirst()`)?",
+        "crowdTrapByLine": { "1": 3, "2": 18, "3": 24, "4": 55 },
+        "crowdTrapText": "24% of students tapped Line 3 first",
+        "choices": [
+          { "id": "a", "text": "Java Streams are single-use; `s.count()` closes the stream, so calling `s.findFirst()` throws `IllegalStateException`.", "correct": true },
+          { "id": "b", "text": "`findFirst()` cannot be called on a filtered `Stream<String>`.", "correct": false },
+          { "id": "c", "text": "`s.count()` mutates and empties the underlying `items` list.", "correct": false }
+        ],
+        "examRule": "A Java `Stream` can only run ONE terminal operation. Collect to a `List` first or create a fresh `items.stream()` for each pass."
+      }
+    ],
+    "sql": [
+      {
+        "id": "d6-sql-r1",
+        "roundTag": "R1 • WARM-UP",
+        "topic": "INTEGER DIVISION",
+        "filename": "conversion_rate.sql",
+        "goal": "Return the decimal conversion rate (e.g., 0.25) from two integer columns `orders` and `visits`.",
+        "lines": [
+          "SELECT campaign_id,",
+          "       orders / visits AS conv_rate",
+          "FROM campaigns;",
+          "-- Returns 0 for every campaign in Postgres / SQL Server!"
+        ],
+        "flawLine": 2,
+        "nudge": "What happens when you divide two `INTEGER` columns in Postgres or SQL Server?",
+        "crowdTrapByLine": { "1": 6, "2": 88, "3": 6 },
+        "crowdTrapText": "6% of students tapped Line 1 first",
+        "patch": {
+          "tokens": ["orders * 1.0 / visits", "CAST(orders AS FLOAT) / visits", "AS conv_rate"],
+          "accept": [
+            "re:/^orders\\s*\\*\\s*1\\.0\\s*\\/\\s*visits\\s+as\\s+conv_rate$/i",
+            "re:/^cast\\(\\s*orders\\s+as\\s+(float|decimal|numeric|double precision)\\s*\\)\\s*\\/\\s*visits\\s+as\\s+conv_rate$/i"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "Integer division truncates `orders / visits` to 0; multiply by `1.0` or cast one operand to `FLOAT`/`NUMERIC` first.", "correct": true },
+          { "id": "b", "text": "The `/` operator is not supported in `SELECT` clauses.", "correct": false },
+          { "id": "c", "text": "Column aliases like `AS conv_rate` force integer rounding.", "correct": false }
+        ],
+        "examRule": "In Postgres, SQL Server, and SQLite, `int / int` performs integer division and truncates to 0. Multiply by `1.0` or `CAST` to `NUMERIC`/`FLOAT`."
+      },
+      {
+        "id": "d6-sql-r2",
+        "roundTag": "R2 • CORE",
+        "topic": "JOIN TRAP",
+        "filename": "all_products.sql",
+        "goal": "List EVERY product in the catalog along with its total units sold (including unsold products).",
+        "lines": [
+          "SELECT p.name, COALESCE(SUM(s.qty), 0) AS sold",
+          "FROM products p",
+          "JOIN sales s ON p.id = s.product_id",
+          "GROUP BY p.id, p.name;",
+          "-- Unsold products disappear from the report!"
+        ],
+        "flawLine": 3,
+        "nudge": "What kind of join is a bare `JOIN` in SQL, and what does it do to products with zero matching rows in `sales`?",
+        "crowdTrapByLine": { "1": 16, "2": 4, "3": 74, "4": 6 },
+        "crowdTrapText": "16% of students tapped Line 1 first",
+        "patch": {
+          "tokens": ["LEFT JOIN ", "sales s ON p.id = s.product_id"],
+          "accept": [
+            "re:/^left\\s+(outer\\s+)?join\\s+sales\\s+s\\s+on\\s+p\\.id\\s*=\\s*s\\.product_id$/i"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "`JOIN` defaults to `INNER JOIN`, which drops products with no matching sales; use `LEFT JOIN`.", "correct": true },
+          { "id": "b", "text": "`COALESCE(SUM(s.qty), 0)` removes rows whose sum is 0.", "correct": false },
+          { "id": "c", "text": "Grouping by both `p.id` and `p.name` excludes unsold products.", "correct": false }
+        ],
+        "examRule": "A bare `JOIN` is always an `INNER JOIN`. Use `LEFT JOIN` whenever you need to preserve parent rows that have zero child matches."
+      },
+      {
+        "id": "d6-sql-r3",
+        "roundTag": "R3 • BOSS",
+        "topic": "DIVISION BY ZERO",
+        "filename": "rev_per_click.sql",
+        "goal": "Compute revenue per click for every ad, returning NULL safely when an ad has 0 clicks.",
+        "lines": [
+          "SELECT ad_id,",
+          "       revenue / clicks AS rpc",
+          "FROM ad_stats;",
+          "-- Crashes the entire query with DivisionByZeroError when clicks = 0!"
+        ],
+        "flawLine": 2,
+        "nudge": "Which standard SQL function turns `0` into `NULL` so division returns `NULL` instead of crashing?",
+        "crowdTrapByLine": { "1": 5, "2": 89, "3": 6 },
+        "crowdTrapText": "6% of students tapped Line 3 first",
+        "patch": {
+          "tokens": ["revenue / ", "NULLIF(clicks, 0)", "AS rpc"],
+          "accept": [
+            "re:/^revenue\\s*\\/\\s*nullif\\(\\s*clicks\\s*,\\s*0\\s*\\)\\s+as\\s+rpc$/i"
+          ]
+        },
+        "choices": [
+          { "id": "a", "text": "Dividing by `clicks = 0` throws a runtime error; wrap the denominator in `NULLIF(clicks, 0)` so zero becomes NULL.", "correct": true },
+          { "id": "b", "text": "SQL automatically converts division by zero into `0` in all databases.", "correct": false },
+          { "id": "c", "text": "`COALESCE(clicks, 0)` prevents division by zero.", "correct": false }
+        ],
+        "examRule": "Always guard SQL denominators with `NULLIF(denom, 0)` so zero denominators evaluate cleanly to `NULL` instead of crashing the query."
+      }
+    ]
+  }
+]
