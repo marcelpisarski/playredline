@@ -14,6 +14,7 @@ let showHeatmap = false;
 let resetArmed = false;
 let resetTimeout = null;
 let countdownInterval = null;
+let isInitialPageLoad = true;
 
 async function ensurePuzzlesLoaded() {
   if (PUZZLE_BANK) return PUZZLE_BANK;
@@ -38,9 +39,9 @@ function shuffleIndices(len) {
   return arr;
 }
 
-function createFreshRun(isPractice = false) {
+function createFreshRun(isPractice = false, autoStart = false) {
   return {
-    started: false,
+    started: autoStart,
     roundIndex: 0,
     step: 1,
     totalMs: 0,
@@ -61,7 +62,11 @@ function createFreshRun(isPractice = false) {
 
 function getRun(lang) {
   if (!state.activeRuns[lang]) {
-    state.activeRuns[lang] = createFreshRun(false);
+    const autoStart = isInitialPageLoad && lang === state.lang;
+    state.activeRuns[lang] = createFreshRun(false, autoStart);
+    if (autoStart) {
+      trackEvent('run_started', { lang, issue: TODAY_ISSUE.issueNum, practice: false, auto: true });
+    }
   } else if (typeof state.activeRuns[lang].started === 'undefined') {
     const r = state.activeRuns[lang];
     r.started = r.totalMs > 0 || r.step > 1 || r.roundIndex > 0;
@@ -83,6 +88,13 @@ function computeSpeedrunRank(totalMs, mistakes, nudges) {
   if (sec <= 65 && mistakes <= 1) return 'A-RANK';
   if (sec <= 105) return 'B-RANK';
   return 'C-RANK';
+}
+
+function computeSpeedPercentile(totalMs) {
+  const sec = Math.max(5, totalMs / 1000);
+  // Smooth logistic curve centered around 48s median student solve time
+  const raw = 100 / (1 + Math.exp((sec - 48) / 14));
+  return Math.min(99, Math.max(12, Math.round(raw)));
 }
 
 function formatStopwatch(ms) {
@@ -454,6 +466,7 @@ function renderHud() {
     tab.addEventListener('click', () => {
       if (state.lang === l.id) return;
       AUDIO.click();
+      isInitialPageLoad = false;
       state.lang = l.id;
       STORAGE.save(state, currentUser);
       loadLanguageView();
@@ -774,11 +787,12 @@ function renderReceipt() {
   els.receiptLangBadge.textContent = langObj.label.toUpperCase();
   els.receiptFinalTime.textContent = formatStopwatch(record.finalMs);
 
+  const pct = computeSpeedPercentile(record.finalMs);
   if (record.isNewPB) {
-    els.receiptPbLine.textContent = 'NEW PERSONAL BEST';
+    els.receiptPbLine.textContent = `NEW PB · FASTER THAN ${pct}% TODAY`;
     els.receiptPbLine.className = 'font-mono text-[11px] font-semibold text-emerald mt-1.5';
   } else {
-    els.receiptPbLine.textContent = `BEST: ${formatStopwatch(record.pbMs)}`;
+    els.receiptPbLine.textContent = `BEST: ${formatStopwatch(record.pbMs)} · TOP ${100 - pct}%`;
     els.receiptPbLine.className = 'font-mono text-[11px] font-semibold text-muted mt-1.5';
   }
 
@@ -817,8 +831,8 @@ function renderReceipt() {
   const nextTier = CONFIG.CAREER_RANKS[currentIdx + 1];
 
   if (nextTier) {
-    const pct = Math.min(100, Math.max(5, Math.round(((state.xp - currentTier.minXP) / (nextTier.minXP - currentTier.minXP)) * 100)));
-    els.receiptCareerBar.style.width = `${pct}%`;
+    const barPct = Math.min(100, Math.max(5, Math.round(((state.xp - currentTier.minXP) / (nextTier.minXP - currentTier.minXP)) * 100)));
+    els.receiptCareerBar.style.width = `${barPct}%`;
     els.receiptCareerProgressLabel.textContent = `${state.xp} / ${nextTier.minXP} XP`;
     els.receiptCareerNextLabel.textContent = `Next: ${nextTier.name}`;
   } else {
@@ -1091,6 +1105,7 @@ async function loadLanguageView() {
     const lang = state.lang;
     const record = state.dailyRecords[lang];
     const run = getRun(lang);
+    isInitialPageLoad = false;
 
     if (!PUZZLE_BANK || !PUZZLE_BANK[lang] || !PUZZLE_BANK[lang].length) {
       els.loadingView.classList.add('hidden');
@@ -1154,7 +1169,8 @@ els.copyReceiptBtn.addEventListener('click', async () => {
   const outcomes = record.splitOutcomes || ['clean', 'clean', 'clean'];
   const blocks = outcomes.map(o => (o === 'missed' ? '🟥' : (o === 'recovered' ? '🟨' : '🟩'))).join('');
   const splitsStr = record.splits.map((ms, i) => `R${i + 1} ${formatSplitShort(ms || 0)}`).join(' · ');
-  const shareText = `REDLINE #${TODAY_ISSUE.issueLabel} (${langLabel})\n${blocks} ${formatStopwatch(record.finalMs)} · ${record.rank}\n${splitsStr}\n${CONFIG.SHARE_URL}`;
+  const pct = computeSpeedPercentile(record.finalMs);
+  const shareText = `REDLINE #${TODAY_ISSUE.issueLabel} (${langLabel})\n${blocks} ${formatStopwatch(record.finalMs)} · ${record.rank} (Faster than ${pct}%)\n${splitsStr}\n${CONFIG.SHARE_URL}`;
 
   try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1178,7 +1194,8 @@ els.copyReceiptBtn.addEventListener('click', async () => {
 
 els.replayPbBtn.addEventListener('click', () => {
   AUDIO.click();
-  state.activeRuns[state.lang] = createFreshRun(true);
+  isInitialPageLoad = false;
+  state.activeRuns[state.lang] = createFreshRun(true, false);
   STORAGE.save(state, currentUser);
   loadLanguageView();
 });
@@ -1187,6 +1204,7 @@ els.suggestedLangBtn.addEventListener('click', () => {
   const nextId = els.suggestedLangBtn.dataset.lang;
   if (!nextId) return;
   AUDIO.click();
+  isInitialPageLoad = false;
   state.lang = nextId;
   STORAGE.save(state, currentUser);
   loadLanguageView();
@@ -1304,6 +1322,7 @@ els.resetProgressBtn.addEventListener('click', () => {
   clearTimeout(resetTimeout);
   resetArmed = false;
   els.resetProgressBtn.textContent = defaultLabel;
+  isInitialPageLoad = false;
   state = STORAGE.getDefault();
   if (currentUser) {
     STORAGE.save(state, currentUser);
@@ -1439,6 +1458,7 @@ authEls.form.addEventListener('submit', async (e) => {
   }
 
   AUDIO.split();
+  trackEvent('user_signed_up', { mode: authMode });
   authEls.form.reset();
   authEls.modal.classList.add('hidden');
 });
@@ -1458,6 +1478,7 @@ if (sb) {
 
     if (changed) {
       stopClock();
+      isInitialPageLoad = false;
       if (currentUser) {
         const res = await STORAGE.loadCloud(currentUser.id, {
           theme: state.theme,
