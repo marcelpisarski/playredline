@@ -1,11 +1,15 @@
-const CACHE_NAME = 'redline-v2';
+const CACHE_NAME = 'redline-v3';
 const CORE_ASSETS = [
   './',
   './index.html',
-  './puzzles.json'
+  './styles.css',
+  './puzzles.json',
+  './js/config.js',
+  './js/audio.js',
+  './js/storage.js',
+  './js/app.js'
 ];
 
-// 1. Pre-cache core app shell on install
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS))
@@ -13,7 +17,6 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// 2. Clean up old caches on activate
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -27,14 +30,12 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// 3. Network-first for app & puzzles, cache-first for fonts/CDN
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
 
-  // Never cache analytics or Supabase auth/database requests
   if (
     url.hostname.includes('umami.is') ||
     url.hostname.includes('plausible.io') ||
@@ -43,8 +44,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Same-origin (index.html, puzzles.json): Network-first so updates show immediately,
-  // falling back to cache if campus Wi-Fi drops.
+  // Network-first for app shell and puzzles; cache fallback when offline
   if (url.origin === self.location.origin) {
     event.respondWith(
       fetch(request)
@@ -60,7 +60,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // External assets (Tailwind CDN, Google Fonts, Supabase SDK): Cache-first so styling works offline
+  // Cache-first for external fonts and CDN dependencies
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
