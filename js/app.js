@@ -928,7 +928,7 @@ function handleLineTap(lineNum, rowEl) {
   STORAGE.save(state, currentUser);
   renderGame();
   const left = CONFIG.MAX_ATTEMPTS - run.wrongLines.length;
-  els.inlineFeedbackText.textContent = `Line ${lineNum} is fine — ${left} ${left === 1 ? 'attempt' : 'attempts'} left.`;
+  els.inlineFeedbackText.textContent = `Line ${lineNum} is valid — tap another line (${left} ${left === 1 ? 'attempt' : 'attempts'} left).`;
   els.inlineFeedback.classList.remove('hidden');
 }
 
